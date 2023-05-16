@@ -1,0 +1,29 @@
+name: PEng-2023
+channels:
+- conda-forge
+dependencies:
+- python>=3.11
+- pip
+
+  # main packages
+- numpy
+- scipy
+- pandas>=1.4
+- shapely
+- yaml
+
+ #db stuff
+- psycopg2
+- sqlalchemy
+
+  # interactive python
+- ipython
+- jupyterlab
+
+  # plotting
+- matplotlib>=3.5
+- plotly
+
+  # publishing
+- jupyter-book
+- ghp-import
