@@ -1,13 +1,14 @@
 numpy
 scipy
-pandas>=1.4
+pandas>=2.0
 shapely
 yaml
 psycopg2
-sqlalchemy
+sqlalchemy>=2.0
+geoalchemy2
 ipython
 jupyterlab
-matplotlib>=3.5
+matplotlib
 plotly
 jupyter-book
 ghp-import

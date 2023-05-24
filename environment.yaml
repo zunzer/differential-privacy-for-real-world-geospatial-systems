@@ -8,20 +8,21 @@ dependencies:
   # main packages
 - numpy
 - scipy
-- pandas>=1.4
+- pandas>=2.0
 - shapely
 - yaml
 
  #db stuff
 - psycopg2
-- sqlalchemy
+- sqlalchemy>=2.0
+- geoalchemy2
 
   # interactive python
 - ipython
 - jupyterlab
 
   # plotting
-- matplotlib>=3.5
+- matplotlib
 - plotly
 
   # publishing
