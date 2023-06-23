@@ -1,13 +1,35 @@
+-- Load python language in postgres db (only successful if python version and PATH is correct)
+CREATE EXTENSION plpython3u;
+
+
+-- Function for activating existing pip venv
+CREATE OR REPLACE FUNCTION activate_python_venv(venv text)
+  RETURNS void AS
+$BODY$
+    import os
+    
+    activate_this = os.path.join(venv, 'bin', 'activate_this.py')
+
+    exec(open(activate_this).read(), dict(__file__=activate_this))
+$BODY$
+LANGUAGE plpython3u;
+
+select activate_python_venv('/home/y_voigt/.venv');
+
+
+-- check if path if correct ("/home/y_voigt/.venv/lib/python3.11/site-packages")
+DO LANGUAGE plpython3u $$
+    import sys
+    plpy.notice('pl/python3 Path: {}'.format(sys.path[0]))                                                                                                                                                           $$;                                                                                                                                                                                                              NOTICE:  pl/python3 Path: /path/to/project/venv/lib/python3.10/site-packages
+DO
+
+
 -- function to add random uniform noise to geo data in plpgsql 
 create or replace function geo_dp(i geometry, epsilon float) RETURNS geometry AS $$
         BEGIN
                 RETURN ST_MakePoint(ST_X(i)+(RANDOM()*((-epsilon)- epsilon) + epsilon), ST_Y(i)+(RANDOM()*((-epsilon)- epsilon) + epsilon));
         END;
 $$ LANGUAGE plpgsql;
-
-
--- Load python language in postgres db (only successful if python version and PATH is correct 
-CREATE EXTENSION plpython3u;
 
 
 -- create Python function after python is loaded 
