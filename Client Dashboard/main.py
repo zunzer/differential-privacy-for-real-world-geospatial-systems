@@ -20,7 +20,7 @@ app.title = "Analytics Dashboard"
 #latitudes = df["latitude"]
 #longitudes = df["longitude"]
 #print(latitudes)
-longitudes, latitudes, income = connector()
+longitudes, latitudes, income, centroid, rect= connector()
 income_mapping = {
     '10001 to 25000': 2.5,
     '25001 to 50000': 5,
@@ -33,6 +33,14 @@ print(numerical_values)
 #latitudes.append(x)
 #longitudes.append(y)
 # Generate sample geo location data
+
+
+corner_points = [
+    {"lat": 37.7749, "lon": -122.4194},  # Top-left corner
+    {"lat": 37.7749, "lon": -122.405},   # Top-right corner
+    {"lat": 37.764, "lon": -122.405},    # Bottom-right corner
+    {"lat": 37.764, "lon": -122.4194}    # Bottom-left corner
+]
 
 # Define the layout
 app.layout = dbc.Container(
@@ -52,7 +60,7 @@ app.layout = dbc.Container(
                         layout=go.Layout(
                             title='Areas with the highest number of Orders:',
                             mapbox=dict(
-                                style='carto-positron',
+                                style='open-street-map',
                                 center=dict(lat=12.9, lon=78),
                                 zoom=10,
                             ),
@@ -77,7 +85,7 @@ app.layout = dbc.Container(
                         layout=go.Layout(
                             title='Areas with the highest Income:',
                             mapbox=dict(
-                                style='carto-positron',
+                                style='open-street-map',#carto-positron',
                                 center=dict(lat=12.9, lon=78),
                                 zoom=10,
                             ),
@@ -88,7 +96,56 @@ app.layout = dbc.Container(
             ),
             className="mt-4",
         ),
-
+        dbc.Row(
+            dbc.Col(
+                html.Div(
+                    children=[
+                        dcc.Graph(
+                        id="map-graph",
+                        figure=px.scatter_mapbox(
+                        lat=[centroid[0]],
+                        lon=[centroid[1]],
+                        zoom=10,
+                        size=[10],
+                        ).update_layout(
+                        title='Centroid:',
+                        mapbox={
+                        'style': 'open-street-map',
+                        'center': {'lat': centroid[0], 'lon': centroid[1]},
+                        'zoom': 15,
+                    },
+                    )
+                    )
+                    ]
+                )
+            )
+        ),
+        dbc.Row(
+            dbc.Col(
+                html.Div(
+                    children=[
+                        dcc.Graph(
+                            id="map-graph1",
+                            figure=go.Figure(
+                                data = go.Scattermapbox(
+                                    lat=[i[1] for i in rect],
+                                    lon=[i[0] for i in rect],
+                                    fill="toself",
+                                    marker={'size': 10, 'color': "orange"}),
+                                layout=go.Layout(
+                                    title='Bounding Rectangle:',
+                                    mapbox={
+                                        'style': 'open-street-map',
+                                        'center': {'lat': centroid[0], 'lon': centroid[1]},  # Set the map's center
+                                        'zoom': 9,
+                                    },
+                                )
+                            )
+                        )
+                    ]
+                )
+            )
+        )
     ],
     fluid=True,
 )

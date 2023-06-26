@@ -33,7 +33,7 @@ def connector():
         lat = []
         long = []
         incomes = []
-        for i in test:
+        for _ in test:
             row = test.fetchone()
             print(row)
             print(row[0])
@@ -42,7 +42,30 @@ def connector():
             long.append(x[1].replace(")", ""))
             incomes.append(row[1])
         print(lat, long)
+        test2 = session.execute(text("SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"))
+        rect = get_rect(test2.fetchone())
+        print("Rect", rect)
+        test3 = session.execute(text("SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"))
+        centroid = get_centroid(test3.fetchone())
+        print("Centroid", centroid)
         session.close()
-        return lat, long, incomes
+        return lat, long, incomes, centroid, rect #centroid_lat, centroid_long, bounding_rect
+
+
+def get_rect(point):
+    x = point[0].split(",")
+    corner_list = []
+    for i in x:
+        corner_list.append(i.split(" "))
+    print(corner_list)
+
+    corner_list[0][0] = corner_list[0][0].replace("POLYGON((", "")
+    corner_list[3][1] = corner_list[3][1].replace(")))", "")
+    return(corner_list)
+
+
+def get_centroid(point):
+    x = point[0].split(" ")
+    return [float(x[1].replace(")", "")), float(x[0].replace("POINT(", ""))]
 
 connector()
