@@ -35,68 +35,63 @@ print(numerical_values)
 # Generate sample geo location data
 
 
-corner_points = [
-    {"lat": 37.7749, "lon": -122.4194},  # Top-left corner
-    {"lat": 37.7749, "lon": -122.405},   # Top-right corner
-    {"lat": 37.764, "lon": -122.405},    # Bottom-right corner
-    {"lat": 37.764, "lon": -122.4194}    # Bottom-left corner
-]
-
 # Define the layout
 app.layout = dbc.Container(
     [
+        html.Br(),
         html.H1("GDPR conform Analytics Dashboard for Food Delivery", className="mb-4"),
         dbc.Row(
-            dbc.Col(
-                dcc.Graph(
-                    id='density-heatmap',
-                    figure=go.Figure(
-                        data=go.Densitymapbox(
-                            lon=longitudes,
-                            lat=latitudes,
-                            z= np.ones_like(latitudes),
-                            radius=30,
-                        ),
-                        layout=go.Layout(
-                            title='Areas with the highest number of Orders:',
-                            mapbox=dict(
-                                style='open-street-map',
-                                center=dict(lat=12.9, lon=78),
-                                zoom=10,
+            [
+                dbc.Col(
+                    dcc.Graph(
+                        id='density-heatmap',
+                        figure=go.Figure(
+                            data=go.Densitymapbox(
+                                lon=longitudes,
+                                lat=latitudes,
+                                z=np.ones_like(latitudes),
+                                radius=30,
                             ),
-                            height=600,
+                            layout=go.Layout(
+                                title='Areas with the highest number of Orders:',
+                                mapbox=dict(
+                                    style='open-street-map',
+                                    center={'lat': centroid[0], 'lon': centroid[1]},
+                                    zoom=10,
+                                ),
+                                height=650,
+                            ),
                         ),
                     ),
+                    width=6,  # Set the width of the first column to 6
                 ),
-            ),
-            className="mt-4",
-        ),
-        dbc.Row(
-            dbc.Col(
-                dcc.Graph(
-                    id='density-heatmap2',
-                    figure=go.Figure(
-                        data=go.Densitymapbox(
-                            lon=longitudes,
-                            lat=latitudes,
-                            z=numerical_values,
-                            radius=30,
-                        ),
-                        layout=go.Layout(
-                            title='Areas with the highest Income:',
-                            mapbox=dict(
-                                style='open-street-map',#carto-positron',
-                                center=dict(lat=12.9, lon=78),
-                                zoom=10,
+                dbc.Col(
+                    dcc.Graph(
+                        id='density-heatmap2',
+                        figure=go.Figure(
+                            data=go.Densitymapbox(
+                                lon=longitudes,
+                                lat=latitudes,
+                                z=numerical_values,
+                                radius=30,
                             ),
-                            height=600,
+                            layout=go.Layout(
+                                title='Areas with the highest Income:',
+                                mapbox=dict(
+                                    style='open-street-map',
+                                    center={'lat': centroid[0], 'lon': centroid[1]},
+                                    zoom=10,
+                                ),
+                                height=650,
+                            ),
                         ),
                     ),
+                    width=6,  # Set the width of the second column to 6
                 ),
-            ),
-            className="mt-4",
+            ]
         ),
         dbc.Row(
+            [
             dbc.Col(
                 html.Div(
                     children=[
@@ -109,7 +104,8 @@ app.layout = dbc.Container(
                         size=[10],
                         ).update_layout(
                         title='Centroid:',
-                        mapbox={
+                            height=650,
+                            mapbox={
                         'style': 'open-street-map',
                         'center': {'lat': centroid[0], 'lon': centroid[1]},
                         'zoom': 15,
@@ -117,10 +113,8 @@ app.layout = dbc.Container(
                     )
                     )
                     ]
-                )
-            )
-        ),
-        dbc.Row(
+                ),width = 6,
+            ),
             dbc.Col(
                 html.Div(
                     children=[
@@ -133,6 +127,7 @@ app.layout = dbc.Container(
                                     fill="toself",
                                     marker={'size': 10, 'color': "orange"}),
                                 layout=go.Layout(
+                                    height=650,
                                     title='Bounding Rectangle:',
                                     mapbox={
                                         'style': 'open-street-map',
@@ -145,6 +140,7 @@ app.layout = dbc.Container(
                     ]
                 )
             )
+            ]
         )
     ],
     fluid=True,
