@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import numpy as np
-from postgres import connector
+from postgres import connectorII
 
 
 # Create the Dash app
@@ -20,7 +20,7 @@ app.title = "Analytics Dashboard"
 #latitudes = df["latitude"]
 #longitudes = df["longitude"]
 #print(latitudes)
-longitudes, latitudes, income, centroid, rect= connector()
+longitudes, latitudes, income, centroid, rect= connectorII()
 income_mapping = {
     '10001 to 25000': 2.5,
     '25001 to 50000': 5,
