@@ -1,5 +1,10 @@
 *.csv
 .idea
-GeoClient/__pycache__/postgres.cpython-310.pyc
 GeoClient/peng
 .ipynb_checkpoints/pgsql_connect-checkpoint.ipynb
+.venv
+venv
+*.pyc
+.DS_Store
+.env
+__pycache__
