@@ -25,14 +25,16 @@ def connector():
         Session = sessionmaker(bind=engine)
         session = Session()
         test = session.execute(text("select activate_python_venv('/home/y_voigt/.venv');"))
-        # test data retrieval
-        test = session.execute(text("SELECT ST_AsText(geo_dp_centroid(geom, 20)), monthly_income, ST_Envelope(geom) FROM public.online_delivery_data"))
+
+        test = session.execute(text("SELECT ST_AsText(geom), monthly_income FROM public.online_delivery_data"))
         print(test)
         lat = []
         long = []
         incomes = []
         for _ in test:
             row = test.fetchone()
+            if row is None:
+                break
             print(row)
             print(row[0])
             x = row[0].split(" ")

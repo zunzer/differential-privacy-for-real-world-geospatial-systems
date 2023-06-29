@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -6,7 +8,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 import numpy as np
-from postgres import connectorII
+from postgres import connector
+from dash.dependencies import Input, Output, State
 
 
 # Create the Dash app
@@ -20,7 +23,7 @@ app.title = "Analytics Dashboard"
 #latitudes = df["latitude"]
 #longitudes = df["longitude"]
 #print(latitudes)
-longitudes, latitudes, income, centroid, rect= connectorII()
+longitudes, latitudes, income, centroid, rect= connector()
 income_mapping = {
     '10001 to 25000': 2.5,
     '25001 to 50000': 5,
@@ -39,7 +42,32 @@ print(numerical_values)
 app.layout = dbc.Container(
     [
         html.Br(),
-        html.H1("GDPR conform Analytics Dashboard for Food Delivery", className="mb-4"),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.H1("GDPR conform Analytics Dashboard for Food Delivery", className="mb-4"),
+                    width=6,
+                ),
+                dbc.Col(
+                    dcc.Slider(0, 1, 0.1, value=0, id='epsilon'),
+                    width=2,
+                ),
+                dbc.Col(
+                    html.Div([
+                        dcc.Loading(id="loading", type="circle",
+                                    children=[
+                                        html.Button('Reload', id='submit-button', n_clicks=0,
+                                                    style={'align': 'center', 'width': '50%','height':'1cm',
+                                                           'display': 'inline-block', 'background-color': '#119dff', "border":"none",
+                                                           'color': 'black'}),
+                                        html.Div(id='output')
+                                    ]
+                                    )
+                    ]),
+                    width=2,
+                ),
+        ]),
+        html.Br(),
         dbc.Row(
             [
                 dbc.Col(
@@ -56,7 +84,7 @@ app.layout = dbc.Container(
                                 title='Areas with the highest number of Orders:',
                                 mapbox=dict(
                                     style='open-street-map',
-                                    center={'lat': centroid[0], 'lon': centroid[1]},
+                                    center={'lat': 12.995, 'lon': 77.5773 },
                                     zoom=10,
                                 ),
                                 height=650,
@@ -79,7 +107,7 @@ app.layout = dbc.Container(
                                 title='Areas with the highest Income:',
                                 mapbox=dict(
                                     style='open-street-map',
-                                    center={'lat': centroid[0], 'lon': centroid[1]},
+                                    center={'lat': 12.995, 'lon': 77.5773 },
                                     zoom=10,
                                 ),
                                 height=650,
@@ -131,7 +159,7 @@ app.layout = dbc.Container(
                                     title='Bounding Rectangle:',
                                     mapbox={
                                         'style': 'open-street-map',
-                                        'center': {'lat': centroid[0], 'lon': centroid[1]},  # Set the map's center
+                                        'center': {'lat': 12.977, 'lon': 77.5773 },  # Set the map's center
                                         'zoom': 9,
                                     },
                                 )
@@ -145,6 +173,24 @@ app.layout = dbc.Container(
     ],
     fluid=True,
 )
+
+
+@app.callback(
+    Output('output', 'children'),
+    [Input('submit-button', 'n_clicks')]
+)
+def update_variable(n_clicks):
+    global longitudes
+    global latitudes
+    global income
+    global centroid
+    global rect
+    global numerical_values
+    if n_clicks is not None:
+        longitudes, latitudes, income, centroid, rect = connector()
+        numerical_values = [income_mapping[range_] for range_ in income]
+    return f'Refreshed: {datetime.now().strftime("%H:%M:%S")}'
+
 
 # Run the app
 if __name__ == '__main__':
