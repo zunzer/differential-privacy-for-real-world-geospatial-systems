@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 from typing import Union
 
 from sqlalchemy import Row  # Run pip install sqlalchemy
@@ -67,12 +68,20 @@ def get_centroid(point):
 def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
+    config = ConfigParser()
+    config.read("settings.ini")
+    db_settings = config["postgres"]
+    ssh_settings = config["ssh"]
+
     with SSHTunnelForwarder(
-        ("35.234.102.238", 22),  # Remote server IP and SSH port
-        ssh_username="y_voigt",
-        ssh_pkey="/home/yannick/.ssh/gcp_key",
-        ssh_private_key_password="",
-        remote_bind_address=("localhost", 5432),
+        (
+            ssh_settings["host_ip"],
+            int(ssh_settings["port"]),
+        ),  # Remote server IP and SSH port
+        ssh_username=ssh_settings["username"],
+        ssh_pkey=ssh_settings["pkey_path"],
+        ssh_private_key_password=ssh_settings["pkey_password"],
+        remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
     ) as server:  # PostgreSQL server IP and sever port on remote machine
         server.start()  # start ssh sever
         print("Server connected via SSH")
@@ -80,7 +89,7 @@ def execute_query(
         # connect to PostgreSQL
         local_port = str(server.local_bind_port)
         engine = create_engine(
-            "postgresql://postgres:password@127.0.0.1:" + local_port + "/peng",
+            f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:{local_port}/{db_settings['db_name']}",
         )
         insp = inspect(engine)
         # print(insp.get_table_names())
