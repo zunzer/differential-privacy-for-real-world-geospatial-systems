@@ -6,6 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 import scipy.ndimage as ndimage
 from dash.dependencies import Input, Output, State
+from postgres import execute_query, get_centroid
 
 
 def request_dp_centroid(n: int):
@@ -88,23 +89,6 @@ def plot_3d_centroids(n):
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
     )
     return fig
-
-
-def get_centroid(point):
-    x = point[0].split(" ")
-    return [float(x[1].replace(")", "")), float(x[0].replace("POINT(", ""))]
-
-
-def get_rect(point):
-    x = point[0].split(",")
-    corner_list = []
-    for i in x:
-        corner_list.append(i.split(" "))
-    print(corner_list)
-
-    corner_list[0][0] = corner_list[0][0].replace("POLYGON((", "")
-    corner_list[3][1] = corner_list[3][1].replace(")))", "")
-    return corner_list
 
 
 def evaluator_layout():

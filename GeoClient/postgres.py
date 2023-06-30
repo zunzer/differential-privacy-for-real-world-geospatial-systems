@@ -1,7 +1,6 @@
 from configparser import ConfigParser
 from typing import Union
 
-from evaluatorapp import get_centroid, get_rect
 from sqlalchemy import (
     CursorResult,
     Row,  # Run pip install sqlalchemy
@@ -51,6 +50,23 @@ def aggregator():
         centroid,
         rect,
     )  # centroid_lat, centroid_long, bounding_rect
+
+
+def get_centroid(point):
+    x = point[0].split(" ")
+    return [float(x[1].replace(")", "")), float(x[0].replace("POINT(", ""))]
+
+
+def get_rect(point):
+    x = point[0].split(",")
+    corner_list = []
+    for i in x:
+        corner_list.append(i.split(" "))
+    print(corner_list)
+
+    corner_list[0][0] = corner_list[0][0].replace("POLYGON((", "")
+    corner_list[3][1] = corner_list[3][1].replace(")))", "")
+    return corner_list
 
 
 def execute_query(
