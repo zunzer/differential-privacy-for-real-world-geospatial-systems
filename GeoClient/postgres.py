@@ -12,11 +12,12 @@ from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
 
 
-def aggregator():
+def aggregator(epsilon:int = 1):
     lat = []
     long = []
     incomes = []
     query_result = execute_query(
+        #f'SELECT  ST_AsText(private_data({epsilon}))',
         "SELECT ST_AsText(geom), monthly_income FROM public.online_delivery_data",
         unfetched_output=True,
     )
@@ -30,25 +31,25 @@ def aggregator():
         lat.append(x[0].replace("POINT(", ""))
         long.append(x[1].replace(")", ""))
         incomes.append(row[1])
-    # print(lat, long)
-    rect = get_rect(
-        execute_query(
-            "SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
+    print(lat, long)
+    rect = execute_query(
+            f'SELECT private_bounding_rect({epsilon})'
+
+            #"SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
         )
-    )
+
     # print("Rect", rect)
-    centroid = get_centroid(
-        execute_query(
-            "SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"
+    centroid = execute_query(
+            f'SELECT private_centroid({epsilon})'
         )
-    )
+
     # print("Centroid", centroid)
     return (
         lat,
         long,
         incomes,
-        centroid,
-        rect,
+        centroid[0],
+        rect[0],
     )  # centroid_lat, centroid_long, bounding_rect
 
 
@@ -73,7 +74,7 @@ def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
     config = ConfigParser()
-    config.read("settings.ini")
+    config.read("../settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
 

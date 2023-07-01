@@ -1,6 +1,3 @@
--- noinspection SqlDialectInspectionForFile
--- noinspection SqlNoDataSourceInspectionForFile
-
 -- Load python language in postgres db (only successful if python version and PATH is correct)
 CREATE EXTENSION plpython3u;
 
@@ -10,13 +7,15 @@ CREATE OR REPLACE FUNCTION activate_python_venv(venv text)
   RETURNS void AS
 $BODY$
     import os
+
     activate_this = os.path.join(venv, 'bin', 'activate_this.py')
+
     exec(open(activate_this).read(), dict(__file__=activate_this))
 $BODY$
 LANGUAGE plpython3u;
 
 
--- function to activate Python env
+-- function to activate Phython
 select activate_python_venv('/home/y_voigt/.venv');
 
 
@@ -35,8 +34,18 @@ create or replace function geo_dp(i geometry, epsilon float) RETURNS geometry AS
 $$ LANGUAGE plpgsql;
 
 
--- Functions for midterm presentation
-select * FROM public."Delivery"
+-- create Python function after python is loaded
+CREATE or replace FUNCTION pymax (a integer, b integer)
+  RETURNS integer
+AS $$
+  if a > b:
+    return a
+  return b
+$$ LANGUAGE plpython3u;
+
+
+-- Demonstration for midterm
+select * FROM public.online_delivery_data
 
 SELECT geom as location, age , gender, marital_status , monthly_income, centroid
 FROM public."Delivery", (SELECT st_centroid(st_union(geom)) AS centroid FROM public."Delivery") as table4, (SELECT st_centroid(st_union(geo_dp(geom,0.01))) AS dp_centroid FROM public."Delivery")as table3
@@ -49,14 +58,16 @@ FROM public."Delivery", (SELECT ST_ClusterWithin(geom) AS point FROM public."Del
 
 
 
--- Tests for differential private functions
-select geo_dp(geom,0.01) from online_delivery_data
 
-select geo_dp_centroid(geom, 20), geom from online_delivery_data
+-- add & delete new item
+INSERT INTO online_delivery_data VALUES (388, 20, 'Female', 'Married', 'Student', 'No Income', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral',	'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT (75.9901232886963 55.5953903123242)', 4326));
 
-SELECT (st_centroid(st_union(geo_dp_centroid(geom,0.01)))) FROM public.online_delivery_data
+DELETE FROM public.online_delivery_data
+WHERE "index"=388
 
--- create centroid differential private function
+
+
+-- old centroid dp function
 CREATE or REPLACE FUNCTION geo_dp_centroid(geom geometry, epsilon float)
   RETURNS geometry
 AS $$
@@ -80,33 +91,84 @@ AS $$
 $$ LANGUAGE plpython3u;
 
 
+-- create centroid dp function
+select private_centroid(10)
+
+CREATE or REPLACE FUNCTION private_centroid(epsilon float)
+  RETURNS text
+AS $$
+ from plpygis import Geometry
+ from plpygis import Point
+ from GeoPrivacy.mechanism import random_laplace_noise
+ geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
+ point = Geometry(geom[0]['st_centroid'])
+ if point.type != "Point":
+      return None
+ gj = point.geojson
+ lon = gj["coordinates"][0]
+ lat = gj["coordinates"][1]
+ noise = random_laplace_noise(epsilon)
+ new_lon = lon+ noise[0]
+ new_lat = lat+ noise[1]
+ return [new_lon, new_lat]
+$$ LANGUAGE plpython3u;
+
+drop function private_centroid(epsilon float)
 
 -- create bounding rectangle dp function
-CREATE or REPLACE FUNCTION geo_dp_rect(geom geometry, epsilon float)
-  RETURNS TEXT
+select * from private_data(0.1)
+
+CREATE or REPLACE FUNCTION private_data(epsilon float)
+RETURNS SETOF myType
 AS $$
  from plpygis import Geometry
- plpy.info("Starting test run")
+ from plpygis import Point
+ geom = plpy.execute("select geom, monthly_income from public.online_delivery_data")
+ plpy.info(geom)
+ point = Geometry(geom[0]['geom'])
+ if point.type != "Point":
+      return None
+ gj = point.geojson
+ lon = gj["coordinates"][0]
+ lat = gj["coordinates"][1]
  from GeoPrivacy.mechanism import random_laplace_noise
  noise = random_laplace_noise(epsilon)
- new_location = geom + noise
- return new_location
- $$ LANGUAGE plpython3u;
- CREATE extension plpython3u
+ plpy.info(noise[0], noise[1], lon, lat)
+ new_lon = lon+ noise[0]
+ new_lat = lat+ noise[1]
+ plpy.info(new_lon, new_lat)
+ return [Geometry(Point((new_lon, new_lat))), geom[0]['monthly_income']]
+$$ LANGUAGE plpython3u;
+
 
  -- create heatmap dp function
-CREATE or REPLACE FUNCTION geo_dp_heat(geom geometry, epsilon float)
-  RETURNS TEXT
+select * from private_bounding_rect(20)
+SELECT private_bounding_rect(10)
+
+CREATE or REPLACE FUNCTION private_bounding_rect(epsilon float)
+  RETURNS text
 AS $$
  from plpygis import Geometry
- plpy.info("Starting test run")
+ from plpygis import Point
  from GeoPrivacy.mechanism import random_laplace_noise
- noise = random_laplace_noise(epsilon)
- new_location = geom + noise
- return new_location
- $$ LANGUAGE plpython3u;
- CREATE extension plpython3u
+ geom = plpy.execute("select st_astext(ST_Envelope(st_union(geom))) from public.online_delivery_data")
+ plpy.info(geom)
+ def get_rect(point):
+    plpy.info(point)
+    x = point.split(",")
+    plpy.info(x)
+    corner_list = []
+    for i in x:
+        corner_list.append(i.split(" "))
+    corner_list[0][0] = corner_list[0][0].replace("POLYGON((", "")
+    corner_list[4][1] = corner_list[4][1].replace("))", "")
+    return corner_list
+ corner = get_rect(geom[0]['st_astext'])
+ plpy.info(corner)
+ for i, point in enumerate(corner):
+ 	noise = random_laplace_noise(epsilon)
+ 	corner[i] = [float(point[0])+noise[0],float(point[1])+noise[1]]
+ plpy.info(corner)
+ return corner
+$$ LANGUAGE plpython3u;
 
-drop function geo_dp_centroid(geometry,double precision);
-drop function geo_dp_rect(geometry,double precision)
-drop function geo_dp_heat(geometry,double precision)
