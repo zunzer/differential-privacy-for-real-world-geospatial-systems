@@ -14,17 +14,17 @@ from postgres import aggregator
 
 longitudes, latitudes, income, centroid, rect = aggregator()
 income_mapping = {
-    "10001 to 25000": 2.5,
-    "25001 to 50000": 5,
-    "More than 50000": 10,
-    "Below Rs.10000": 1,
-    "No Income": 0,
+    " 10001 to 25000": 2.5,
+    " 25001 to 50000": 5,
+    " More than 50000": 10,
+    " Below Rs.10000": 1,
+    " No Income": 0,
 }
 numerical_values = [income_mapping[range_] for range_ in income]
 
 
 app = dash.Dash(
-    __name__, update_title=None, external_stylesheets=[dbc.themes.BOOTSTRAP]
+    __name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True,
 )
 app.title = "Analytics Dashboard"
 
@@ -102,7 +102,7 @@ def plot_centroid(centroid):
             },
             "zoom": 15,
         },
-    ),
+    )
     return figure
 
 def plot_rect(rect):
@@ -152,7 +152,26 @@ homelayout = dbc.Container(
                     width=6,
                 ),
                 dbc.Col(
-                    dcc.Slider(0, 1, 0.1, value=0, id="epsilon"),
+                    [dcc.Slider(
+                        0.0001,
+                        1,
+                        0.01,
+                        value=0.01,
+                        id="epsilon",
+                        marks={
+                            0.1: '0.1',
+                            0.2: '0.2',
+                            0.3: '0.3',
+                            0.4: '0.4',
+                            0.5: '0.5',
+                            0.6: '0.6',
+                            0.7: '0.7',
+                            0.8: '0.8',
+                            0.9: '0.9',
+
+                        }
+                    ),
+                    html.Div(id="output_value")],
                     width=2,
                 ),
                 dbc.Col(
@@ -233,8 +252,12 @@ app.layout = html.Div(
 
 update_evaluator(app)
 
+@app.callback(Output("output_value", "children"), Input("epsilon", "value"))
+def display_value(value):
+    return f"Value: {value}"
 
-@app.callback([Output("output", "children"), Output("density-heatmap", "figure"), Output("density-heatmap2", "figure"), Output("map-graph", "figure"), Output("map-graph1", "figure")], [Input("epsilon","value"), Input("submit-button", "n_clicks")])
+
+@app.callback([Output("output", "children"), Output("density-heatmap", "figure"), Output("density-heatmap2", "figure"), Output("map-graph", "figure"), Output("map-graph1", "figure")], [State("epsilon","value")], [Input("submit-button", "n_clicks")])
 def update_variable(value, n_clicks):
     if n_clicks is not None:
         print("update")
@@ -245,9 +268,11 @@ def update_variable(value, n_clicks):
         print("finished plot1")
         figure2 = plot_income([float(i) for i in longitudes], [float(i) for i in latitudes], numerical_values)
         print("finished plot2")
-        figure3 = plot_centroid(centroid)
+        print(centroid, centroid[0], centroid[1])
+        figure3 = plot_centroid([float(centroid[0]),float(centroid[1])])
         print("finished centroid")
-        figure4 = plot_rect(rect)
+        print(rect)
+        figure4 = plot_rect(rect) #TODO: It has to stay a rectangle
         print("LEngth:", len(longitudes))
         return f'Refreshed: {datetime.now().strftime("%H:%M:%S")}', figure1,figure2,figure3,figure4,
 

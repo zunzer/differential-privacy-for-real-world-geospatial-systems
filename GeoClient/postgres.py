@@ -17,39 +17,31 @@ def aggregator(epsilon:int = 1):
     long = []
     incomes = []
     query_result = execute_query(
-        #f'SELECT  ST_AsText(private_data({epsilon}))',
-        "SELECT ST_AsText(geom), monthly_income FROM public.online_delivery_data",
-        unfetched_output=True,
+        f'SELECT  private_data({epsilon})',
+        #"SELECT ST_AsText(geom), monthly_income FROM public.online_delivery_data",
     )
-    for _ in query_result:
-        row = query_result.fetchone()
-        if row is None:
-            break
-        # print(row)
-        # print(row[0])
-        x = row[0].split(" ")
-        lat.append(x[0].replace("POINT(", ""))
-        long.append(x[1].replace(")", ""))
-        incomes.append(row[1])
-    print(lat, long)
+    x = query_result[0].split("], [")
+    for i in x:
+        res = i.split(",")
+        lat.append(res[0].replace("[", ""))
+        long.append(res[1])
+        incomes.append(res[2].replace("]", "").replace("'", ""))
     rect = execute_query(
             f'SELECT private_bounding_rect({epsilon})'
 
             #"SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
         )
 
-    # print("Rect", rect)
     centroid = execute_query(
             f'SELECT private_centroid({epsilon})'
         )
 
-    # print("Centroid", centroid)
     return (
         lat,
         long,
         incomes,
-        centroid[0],
-        rect[0],
+        centroid[0].replace("[","").replace("]","").split(", "),
+        [i.replace("[","").replace("]","").split(",") for i in rect[0].split("], [")]
     )  # centroid_lat, centroid_long, bounding_rect
 
 
@@ -100,13 +92,11 @@ def execute_query(
         # print(insp.get_table_names())
         Session = sessionmaker(bind=engine)
         session = Session()
-        print("Database session created")
         env_activation = session.execute(
             text("select activate_python_venv('/home/y_voigt/.venv');")
         )
         sql_query = session.execute(text(query))
         session.close()
-        print("Session closed")
         if unfetched_output:
             # print(type(sql_query))
             return sql_query
