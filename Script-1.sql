@@ -116,33 +116,36 @@ $$ LANGUAGE plpython3u;
 drop function private_centroid(epsilon float)
 
 -- create bounding rectangle dp function
-select * from private_data(0.1)
+select private_data(0.1)
+
 
 CREATE or REPLACE FUNCTION private_data(epsilon float)
-RETURNS SETOF myType
+RETURNS text
 AS $$
  from plpygis import Geometry
  from plpygis import Point
- geom = plpy.execute("select geom, monthly_income from public.online_delivery_data")
- plpy.info(geom)
- point = Geometry(geom[0]['geom'])
- if point.type != "Point":
-      return None
- gj = point.geojson
- lon = gj["coordinates"][0]
- lat = gj["coordinates"][1]
  from GeoPrivacy.mechanism import random_laplace_noise
- noise = random_laplace_noise(epsilon)
- plpy.info(noise[0], noise[1], lon, lat)
- new_lon = lon+ noise[0]
- new_lat = lat+ noise[1]
- plpy.info(new_lon, new_lat)
- return [Geometry(Point((new_lon, new_lat))), geom[0]['monthly_income']]
+ srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
+ plpy.info(srows)
+ res = []
+ for i in srows:
+  point = Geometry(i['geom'])
+  if point.type != "Point":
+   return None
+  gj = point.geojson
+  lon = gj["coordinates"][0]
+  lat = gj["coordinates"][1]
+  noise = random_laplace_noise(epsilon)
+  new_lon = lon+ noise[0]
+  new_lat = lat+ noise[1]
+  res.append([new_lon, new_lat, i['monthly_income']])
+ return res
 $$ LANGUAGE plpython3u;
 
 
  -- create heatmap dp function
 select * from private_bounding_rect(20)
+
 SELECT private_bounding_rect(10)
 
 CREATE or REPLACE FUNCTION private_bounding_rect(epsilon float)
@@ -165,10 +168,15 @@ AS $$
     return corner_list
  corner = get_rect(geom[0]['st_astext'])
  plpy.info(corner)
- for i, point in enumerate(corner):
- 	noise = random_laplace_noise(epsilon)
- 	corner[i] = [float(point[0])+noise[0],float(point[1])+noise[1]]
- plpy.info(corner)
- return corner
+ geo_mapping = {}
+ for sublist in corner:
+  noise = random_laplace_noise(epsilon)
+  geo_mapping[sublist[0]] = float(sublist[0]) + noise[0]
+  geo_mapping[sublist[1]] = float(sublist[1]) + noise[1]
+ res =[]
+ for sublist in corner:
+  res.append([geo_mapping[sublist[0]], geo_mapping[sublist[1]]])
+ plpy.info(res)
+ return res
 $$ LANGUAGE plpython3u;
 
