@@ -45,7 +45,7 @@ $$ LANGUAGE plpython3u;
 
 
 -- Demonstration for midterm
-select * FROM public.online_delivery_data
+select * from online_delivery_data
 
 SELECT geom as location, age , gender, marital_status , monthly_income, centroid
 FROM public."Delivery", (SELECT st_centroid(st_union(geom)) AS centroid FROM public."Delivery") as table4, (SELECT st_centroid(st_union(geo_dp(geom,0.01))) AS dp_centroid FROM public."Delivery")as table3
@@ -57,6 +57,7 @@ SELECT geom, point
 FROM public."Delivery", (SELECT ST_ClusterWithin(geom) AS point FROM public."Delivery") as table4, (SELECT st_centroid(st_union(geo_dp(geom,0.01))) AS dp_point FROM public."Delivery")as table3
 
 
+INSERT INTO online_delivery_data VALUES (388, 20, 'Female', 'Married', 'Student', 'No Income', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral',	'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT (65.9901232886963 55.5953903123242)', 4326));--") #ST_GeometryFromText('POINT (" +str(long) + " " + str(lat) +")', 4326));")
 
 
 -- add & delete new item
@@ -67,28 +68,22 @@ WHERE "index"=388
 
 
 
--- old centroid dp function
-CREATE or REPLACE FUNCTION geo_dp_centroid(geom geometry, epsilon float)
-  RETURNS geometry
+CREATE or REPLACE FUNCTION real_centroid()
+  RETURNS text
 AS $$
  from plpygis import Geometry
  from plpygis import Point
- point = Geometry(geom)
- plpy.info(point)
+ from GeoPrivacy.mechanism import random_laplace_noise
+ geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
+ point = Geometry(geom[0]['st_centroid'])
  if point.type != "Point":
       return None
  gj = point.geojson
  lon = gj["coordinates"][0]
  lat = gj["coordinates"][1]
- plpy.info("Starting test run")
- from GeoPrivacy.mechanism import random_laplace_noise
- noise = random_laplace_noise(epsilon)
- plpy.info(noise[0], noise[1], lon, lat)
- new_lon = lon + noise[0]
- new_lat = lat + noise[1]
- plpy.info(new_lon, new_lat)
- return Geometry(Point((new_lon, new_lat)))
+ return [lon, lat]
 $$ LANGUAGE plpython3u;
+
 
 
 -- create centroid dp function
