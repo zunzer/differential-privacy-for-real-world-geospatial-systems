@@ -9,7 +9,7 @@ from dash.dependencies import Input, Output, State
 from postgres import execute_query, get_centroid
 
 
-def request_dp_centroid(n: int):
+def request_dp_centroid(epsilon, n: int):
     # test3 = session.execute(text("SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"))
     longitudes = []
     latitudes = []
@@ -17,7 +17,7 @@ def request_dp_centroid(n: int):
     for i in range(n):
         cent = get_centroid(
             execute_query(
-                "SELECT ST_AsText(st_centroid(st_union(geo_dp_centroid(geom,0.01)))) FROM public.online_delivery_data"
+                f"SELECT private_centroid({epsilon}) FROM public.online_delivery_data"
             )
         )
         # print(cent)
@@ -34,7 +34,7 @@ def request_centroid(n: int):
     for i in range(n):
         cent = get_centroid(
             execute_query(
-                "SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"
+                "SELECT real_centroid() FROM public.online_delivery_data"
             )
         )
         # print(cent)
@@ -44,8 +44,8 @@ def request_centroid(n: int):
     return longitudes, latitudes
 
 
-def fetch_dp_centroids(n):
-    longitudes, latitudes = request_dp_centroid(n)
+def fetch_dp_centroids(epsilon, n):
+    longitudes, latitudes = request_dp_centroid(epsilon, n)
     lon_min = min(longitudes) - 5
     lon_max = max(longitudes) + 5
     lat_min = min(latitudes) - 5
@@ -99,6 +99,7 @@ def evaluator_layout():
                 [
                     dbc.Col(
                         [
+                            html.Label("Number of requests: "),
                             dcc.Slider(
                                 1,
                                 4,
@@ -107,6 +108,25 @@ def evaluator_layout():
                                 value=0,
                                 id="num",
                             ),
+                            html.Label("Epsilon: "),
+                            dcc.Slider(
+                                0.0001,
+                                1,
+                                0.01,
+                                value=0.01,
+                                id="epsilon2",
+                                marks={
+                                    0.1: '0.1',
+                                    0.2: '0.2',
+                                    0.3: '0.3',
+                                    0.4: '0.4',
+                                    0.5: '0.5',
+                                    0.6: '0.6',
+                                    0.7: '0.7',
+                                    0.8: '0.8',
+                                    0.9: '0.9',
+
+                                }),
                             html.Div(id="output2"),
                         ],
                         width=8,
@@ -132,7 +152,7 @@ def evaluator_layout():
                                                 "color": "black",
                                             },
                                         ),
-                                        html.Div(id="output3"),
+                                        html.Div(id="output_evaluation"),
                                     ],
                                 )
                             ]
@@ -161,23 +181,25 @@ def update_evaluator(app):
         return f"Value: {int(10**value)}"
 
     @app.callback(
-        Output("output3", "children"),
+        Output("output_evaluation", "children"),
         Output("graph", "figure"),
         Output("graph1", "figure"),
         Output("graph2", "figure"),
         Output("graph3", "figure"),
-        Input("evaluate-button", "n_clicks"),
-        [State("num", "value")],
+        [State("num", "value"), State("epsilon2", "value")],
+        [Input("evaluate-button", "n_clicks")],
+
     )
-    def update_figure(n_clicks, value):
-        if value == 0:
-            return
+    def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
-        x, y, z = fetch_dp_centroids(value)
+        print("Plo1 ready")
+        x, y, z = fetch_dp_centroids(epsilon, value)
         fig2 = plot_3d_dp_centroids(x, y, z, 1)
         fig3 = plot_3d_dp_centroids(x, y, z, 2)
         fig4 = plot_3d_dp_centroids(x, y, z, 3)
         print("Received plots")
-        return f"Display 3D Distribution for {value}", fig1, fig2, fig3, fig4
+        return f"Display 3D Distribution for n={value} and e={epsilon}", fig1, fig2, fig3, fig4
+
+

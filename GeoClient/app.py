@@ -11,6 +11,8 @@ import plotly.graph_objects as go
 from dash.dependencies import Input, Output, State
 from evaluatorapp import evaluator_layout, update_evaluator
 from postgres import aggregator
+from creatorapp import creator_layout, creator_callbacks
+
 
 longitudes, latitudes, income, centroid, rect = aggregator()
 income_mapping = {
@@ -134,8 +136,9 @@ page1_layout = dbc.Container(
     fluid=True,
 )
 # Define the page 2 layout
-page2_layout = html.Div(
-    children=[navbar, html.H1("Page 2"), html.P("Welcome to Page 2!")], className="page"
+page2_layout = dbc.Container(
+    [navbar, creator_layout()],
+    fluid=True,
 )
 
 homelayout = dbc.Container(
@@ -251,6 +254,7 @@ app.layout = html.Div(
 )
 
 update_evaluator(app)
+creator_callbacks(app)
 
 @app.callback(Output("output_value", "children"), Input("epsilon", "value"))
 def display_value(value):
@@ -268,8 +272,8 @@ def update_variable(value, n_clicks):
         print("finished plot1")
         figure2 = plot_income([float(i) for i in longitudes], [float(i) for i in latitudes], numerical_values)
         print("finished plot2")
-        print(centroid, centroid[0], centroid[1])
-        figure3 = plot_centroid([float(centroid[0]),float(centroid[1])])
+        print(centroid)
+        figure3 = plot_centroid(centroid)
         print("finished centroid")
         print(rect)
         figure4 = plot_rect(rect) #TODO: It has to stay a rectangle
