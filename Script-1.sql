@@ -68,20 +68,21 @@ WHERE "index"=388
 
 
 
-CREATE or REPLACE FUNCTION real_centroid()
-  RETURNS text
+CREATE or REPLACE FUNCTION real_centroid(n int, out longitudes text, out latitudes text)
 AS $$
- from plpygis import Geometry
- from plpygis import Point
- from GeoPrivacy.mechanism import random_laplace_noise
- geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
- point = Geometry(geom[0]['st_centroid'])
- if point.type != "Point":
-      return None
- gj = point.geojson
- lon = gj["coordinates"][0]
- lat = gj["coordinates"][1]
- return [lon, lat]
+  from plpygis import Geometry, Point
+  longitudes, latitudes = [], []
+  for i in range(n):
+	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
+	  point = Geometry(geom[0]['st_centroid'])
+	  if point.type != "Point":
+		  return None
+	  gj = point.geojson
+	  lon = gj["coordinates"][0]
+	  lat = gj["coordinates"][1]
+	  longitudes.append(lon)
+	  latitudes.append(lat)
+  return longitudes, latitudes
 $$ LANGUAGE plpython3u;
 
 
@@ -89,23 +90,25 @@ $$ LANGUAGE plpython3u;
 -- create centroid dp function
 select private_centroid(10)
 
-CREATE or REPLACE FUNCTION private_centroid(epsilon float)
-  RETURNS text
-AS $$
- from plpygis import Geometry
- from plpygis import Point
- from GeoPrivacy.mechanism import random_laplace_noise
- geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
- point = Geometry(geom[0]['st_centroid'])
- if point.type != "Point":
-      return None
- gj = point.geojson
- lon = gj["coordinates"][0]
- lat = gj["coordinates"][1]
- noise = random_laplace_noise(epsilon)
- new_lon = lon+ noise[0]
- new_lat = lat+ noise[1]
- return [new_lon, new_lat]
+CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int, out longitudes text, out latitudes text)
+as $$
+  from plpygis import Geometry, Point
+  from GeoPrivacy.mechanism import random_laplace_noise
+  longitudes, latitudes = [], []
+  for i in range(n):
+	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
+	  point = Geometry(geom[0]['st_centroid'])
+	  if point.type != "Point":
+		  return None
+	  gj = point.geojson
+	  lon = gj["coordinates"][0]
+	  lat = gj["coordinates"][1]
+	  noise = random_laplace_noise(epsilon)
+	  new_lon = lon + noise[0]
+	  new_lat = lat + noise[1]
+	  longitudes.append(new_lon)
+	  latitudes.append(new_lat)
+  return longitudes, latitudes
 $$ LANGUAGE plpython3u;
 
 drop function private_centroid(epsilon float)

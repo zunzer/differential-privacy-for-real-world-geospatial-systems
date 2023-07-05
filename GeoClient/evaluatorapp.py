@@ -1,47 +1,22 @@
 import dash
 import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
 import numpy as np
 import plotly.graph_objects as go
 import scipy.ndimage as ndimage
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
-from postgres import execute_query, get_centroid
+from postgres import clean_centroid_result, execute_query
 
 
 def request_dp_centroid(epsilon, n: int):
     # test3 = session.execute(text("SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"))
-    longitudes = []
-    latitudes = []
-
-    for i in range(n):
-        cent = get_centroid(
-            execute_query(
-                f"SELECT private_centroid({epsilon}) FROM public.online_delivery_data"
-            )
-        )
-        # print(cent)
-        longitudes.append(cent[0])
-        latitudes.append(cent[1])
-
-    return longitudes, latitudes
+    res = execute_query(f"SELECT private_centroid({epsilon}, {n});")
+    return clean_centroid_result(res, "private_centroid")
 
 
 def request_centroid(n: int):
-    longitudes = []
-    latitudes = []
-
-    for i in range(n):
-        cent = get_centroid(
-            execute_query(
-                "SELECT real_centroid() FROM public.online_delivery_data"
-            )
-        )
-        # print(cent)
-        longitudes.append(cent[0])
-        latitudes.append(cent[1])
-
-    return longitudes, latitudes
+    res = execute_query(f"SELECT real_centroid({n});")
+    return clean_centroid_result(res, "real_centroid")
 
 
 def fetch_dp_centroids(epsilon, n):
@@ -116,17 +91,17 @@ def evaluator_layout():
                                 value=0.01,
                                 id="epsilon2",
                                 marks={
-                                    0.1: '0.1',
-                                    0.2: '0.2',
-                                    0.3: '0.3',
-                                    0.4: '0.4',
-                                    0.5: '0.5',
-                                    0.6: '0.6',
-                                    0.7: '0.7',
-                                    0.8: '0.8',
-                                    0.9: '0.9',
-
-                                }),
+                                    0.1: "0.1",
+                                    0.2: "0.2",
+                                    0.3: "0.3",
+                                    0.4: "0.4",
+                                    0.5: "0.5",
+                                    0.6: "0.6",
+                                    0.7: "0.7",
+                                    0.8: "0.8",
+                                    0.9: "0.9",
+                                },
+                            ),
                             html.Div(id="output2"),
                         ],
                         width=8,
@@ -188,7 +163,6 @@ def update_evaluator(app):
         Output("graph3", "figure"),
         [State("num", "value"), State("epsilon2", "value")],
         [Input("evaluate-button", "n_clicks")],
-
     )
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
@@ -200,6 +174,10 @@ def update_evaluator(app):
         fig3 = plot_3d_dp_centroids(x, y, z, 2)
         fig4 = plot_3d_dp_centroids(x, y, z, 3)
         print("Received plots")
-        return f"Display 3D Distribution for n={value} and e={epsilon}", fig1, fig2, fig3, fig4
-
-
+        return (
+            f"Display 3D Distribution for n={value} and e={epsilon}",
+            fig1,
+            fig2,
+            fig3,
+            fig4,
+        )
