@@ -38,7 +38,7 @@ navbar = dbc.NavbarSimple(
         dbc.NavItem(dbc.NavLink("User Management", href="/page2")),
     ],
     brand="",
-    color="#119dff",
+    color="#0e1012",
     dark=True,
     style={
         "height": "80px",
@@ -53,7 +53,7 @@ def plot_number_orders(longitudes, latitudes):
             lon=longitudes,
             lat=latitudes,
             z=np.ones_like(latitudes),
-            radius=30,
+            radius=5,
         ),
         layout=go.Layout(
             title="Areas with the highest number of Orders:",
@@ -67,6 +67,52 @@ def plot_number_orders(longitudes, latitudes):
     )
 
     return figure
+
+
+def plot_number_orders(longitude_list, latitude_list):
+    trace = go.Scattergeo(
+        lon=longitude_list,
+        lat=latitude_list,
+        mode='markers',
+        marker=dict(
+            size=5,
+            color='red',
+            opacity=0.7,
+            symbol='circle'
+        )
+    )
+
+    # Create the layout for the map figure
+    layout = go.Layout(
+        title='Scatter Map',
+        showlegend=False,
+        geo=dict(
+            resolution=50,
+            showland=True,
+            showlakes=True,
+            landcolor='rgb(204, 204, 204)',
+            countrycolor='rgb(204, 204, 204)',
+            lakecolor='rgb(255, 255, 255)',
+            projection=dict(
+                type="gnomonic"
+            ),
+            coastlinewidth=0.5,
+            lataxis=dict(
+                range=[min(latitude_list) - 2, max(latitude_list) + 2],
+                showgrid=True,
+            ),
+            lonaxis=dict(
+                range=[min(longitude_list) - 2, max(longitude_list) + 2],
+                showgrid=True,
+            )
+        )
+    )
+
+    # Create the map figure
+    fig = go.Figure(data=[trace], layout=layout)
+   # fig = px.scatter_geo(lat=latitudes, lon=longitudes,  # size='mag',
+    #                     title='Earthquakes Around the World')
+    return fig
 
 
 def plot_income(longitudes, latitudes, numerical_values):
@@ -199,9 +245,9 @@ homelayout = dbc.Container(
                                             "width": "50%",
                                             "height": "1cm",
                                             "display": "inline-block",
-                                            "background-color": "#119dff",
+                                            "background-color": "#0e1012",
                                             "border": "none",
-                                            "color": "black",
+                                            "color": "white",
                                         },
                                     ),
                                     html.Div(id="output"),
@@ -221,6 +267,7 @@ homelayout = dbc.Container(
                     width=6,  # Set the width of the first column to 6
                 ),
                 dbc.Col(
+
                     dcc.Graph(
                         id="density-heatmap2",
                     ),
