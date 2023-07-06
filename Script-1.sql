@@ -94,7 +94,7 @@ CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int, out longitudes
 as $$
   from plpygis import Geometry, Point
   from diffprivlib.mechanisms import Laplace
-  mechanism = Laplace(epsilon=epsilon, sensitivity=1.0)
+  mechanism = Laplace(epsilon=epsilon, sensitivity=0.1)
   longitudes, latitudes = [], []
   for i in range(n):
 	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
