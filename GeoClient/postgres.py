@@ -61,7 +61,7 @@ def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
     config = ConfigParser()
-    config.read("settings.ini")
+    config.read("../settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
 

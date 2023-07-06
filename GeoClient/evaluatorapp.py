@@ -85,22 +85,12 @@ def evaluator_layout():
                             ),
                             html.Label("Epsilon: "),
                             dcc.Slider(
-                                0.0001,
-                                1,
+                                0.001,
+                                2.5,
                                 0.01,
-                                value=0.01,
+                                marks={i: "{}".format((10 ** i)-1) for i in range(5)},
+                                value=0,
                                 id="epsilon2",
-                                marks={
-                                    0.1: "0.1",
-                                    0.2: "0.2",
-                                    0.3: "0.3",
-                                    0.4: "0.4",
-                                    0.5: "0.5",
-                                    0.6: "0.6",
-                                    0.7: "0.7",
-                                    0.8: "0.8",
-                                    0.9: "0.9",
-                                },
                             ),
                             html.Div(id="output2"),
                         ],
@@ -151,9 +141,9 @@ def evaluator_layout():
 
 
 def update_evaluator(app):
-    @app.callback(Output("output2", "children"), Input("num", "value"))
+    @app.callback(Output("output2", "children"), Input("num", "value"), Input("epsilon2", "value"))
     def display_value(value):
-        return f"Value: {int(10**value)}"
+        return f"Number of Requests: {int(10**value)}, Epsilon: {int(10**value-1)}"
 
     @app.callback(
         Output("output_evaluation", "children"),
@@ -166,6 +156,7 @@ def update_evaluator(app):
     )
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
+        epsilon = int((10**epsilon)-1)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
         print("Plo1 ready")

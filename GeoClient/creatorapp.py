@@ -40,12 +40,17 @@ def creator_layout():
             html.Div(
                 [
                     html.Label("Income: "),
-                    dcc.Input(
-                        id="income-input",
-                        type="number",
-                        value=None,
-                        style={"width": "100%"},
-                    ),
+                    dcc.Dropdown(
+                        id='income',
+                        options=[
+                            {'label': "10001 to 25000", 'value': "10001 to 25000"},
+                            {'label': "25001 to 50000", 'value': "25001 to 50000"},
+                            {'label': "More than 50000", 'value': "More than 50000"},
+                            {'label': "Below Rs.10000", 'value': "Below Rs.10000"},
+                            {'label': "No Income", 'value': "No Income"},
+                        ],
+                        value=''
+                    )
                 ]
             ),
             html.Br(),
@@ -124,7 +129,8 @@ def creator_callbacks(app):
         if nclicks > 0:
             print("Execute insert")
             _ = execute_query(
-                "INSERT INTO online_delivery_data VALUES (388, 20, 'Female', 'Married', 'Student', 'No Income', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral',	'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT (65.9901232886963 55.5953903123242)', 4326));"
+                "INSERT INTO online_delivery_data VALUES (388, 20, 'Female', 'Married', 'Student'" + str(
+                    income) + " 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral',	'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT (65.9901232886963 55.5953903123242)', 4326));"
             )  # ST_GeometryFromText('POINT (" +str(long) + " " + str(lat) +")', 4326));")
             print("Executed insert")
             return f"Value: {long},{lat},{income}, {nclicks}"

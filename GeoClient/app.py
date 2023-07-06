@@ -87,23 +87,8 @@ def plot_number_orders(longitude_list, latitude_list):
         title='Scatter Map',
         showlegend=False,
         geo=dict(
-            resolution=50,
-            showland=True,
-            showlakes=True,
-            landcolor='rgb(204, 204, 204)',
-            countrycolor='rgb(204, 204, 204)',
-            lakecolor='rgb(255, 255, 255)',
             projection=dict(
                 type="gnomonic"
-            ),
-            coastlinewidth=0.5,
-            lataxis=dict(
-                range=[min(latitude_list) - 2, max(latitude_list) + 2],
-                showgrid=True,
-            ),
-            lonaxis=dict(
-                range=[min(longitude_list) - 2, max(longitude_list) + 2],
-                showgrid=True,
             )
         )
     )
