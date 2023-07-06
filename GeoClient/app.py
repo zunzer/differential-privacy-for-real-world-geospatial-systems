@@ -122,6 +122,7 @@ def plot_income(longitudes, latitudes, numerical_values):
 
 
 def plot_centroid(centroid):
+    # print("plot", centroid)
     figure = px.scatter_mapbox(
         lat=[centroid[0]],
         lon=[centroid[1]],
@@ -196,7 +197,7 @@ homelayout = dbc.Container(
                             0.0001,
                             1,
                             0.01,
-                            value=0.01,
+                            value=2.0,
                             id="epsilon",
                             marks={
                                 0.1: "0.1",
@@ -208,6 +209,11 @@ homelayout = dbc.Container(
                                 0.7: "0.7",
                                 0.8: "0.8",
                                 0.9: "0.9",
+                                1.0: "1.0",
+                                2.0: "2.0",
+                                4.0: "4.0",
+                                5.0: "5.0",
+                                10.0: "10.0"
                             },
                         ),
                         html.Div(id="output_value"),
@@ -315,7 +321,7 @@ def update_variable(value, n_clicks):
     if n_clicks is not None:
         print("update")
         longitudes, latitudes, income, centroid, rect = aggregator(value)
-        print(longitudes, latitudes, income, centroid, rect)
+        # print(longitudes, latitudes, income, centroid, rect)
         numerical_values = [income_mapping[range_] for range_ in income]
         figure1 = plot_number_orders(
             [float(i) for i in longitudes], [float(i) for i in latitudes]
@@ -327,10 +333,10 @@ def update_variable(value, n_clicks):
             numerical_values,
         )
         print("finished plot2")
-        print(centroid)
+        print("update", centroid)
         figure3 = plot_centroid(centroid)
         print("finished centroid")
-        print(rect)
+        # print(rect)
         figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
         print("LEngth:", len(longitudes))
         return (

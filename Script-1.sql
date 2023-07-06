@@ -88,12 +88,13 @@ $$ LANGUAGE plpython3u;
 
 
 -- create centroid dp function
-select private_centroid(10)
+select private_centroid(10.0, 1)
 
 CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int, out longitudes text, out latitudes text)
 as $$
   from plpygis import Geometry, Point
-  from GeoPrivacy.mechanism import random_laplace_noise
+  from diffprivlib.mechanisms import Laplace
+  mechanism = Laplace(epsilon=epsilon, sensitivity=0.1)
   longitudes, latitudes = [], []
   for i in range(n):
 	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
@@ -101,15 +102,13 @@ as $$
 	  if point.type != "Point":
 		  return None
 	  gj = point.geojson
-	  lon = gj["coordinates"][0]
-	  lat = gj["coordinates"][1]
-	  noise = random_laplace_noise(epsilon)
-	  new_lon = lon + noise[0]
-	  new_lat = lat + noise[1]
-	  longitudes.append(new_lon)
-	  latitudes.append(new_lat)
+	  dp_lon = mechanism.randomise(gj["coordinates"][0])
+	  dp_lat = mechanism.randomise(gj["coordinates"][1])
+	  longitudes.append(dp_lon)
+	  latitudes.append(dp_lat)
   return longitudes, latitudes
 $$ LANGUAGE plpython3u;
+
 
 drop function private_centroid(epsilon float)
 

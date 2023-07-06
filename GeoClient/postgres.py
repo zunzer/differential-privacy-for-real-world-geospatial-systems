@@ -25,15 +25,17 @@ def aggregator(epsilon: int = 1):
         f"SELECT private_bounding_rect({epsilon})"
         # "SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
     )
-    print(1, rect)
 
-    centroid = execute_query(f"SELECT private_centroid({epsilon})")
+    centroid = execute_query(f"SELECT private_centroid({epsilon}, 1)")
+    clean_centroid = [clean_centroid_result(centroid, "private_centroid")[0][0], clean_centroid_result(centroid, "private_centroid")[1][0]]
+    print("test1", clean_centroid)
+
 
     return (
         lat,
         long,
         incomes,
-        get_centroid(centroid),
+        clean_centroid,
         get_rect(rect),
     )  # centroid_lat, centroid_long, bounding_rect
 
@@ -53,8 +55,8 @@ def clean_centroid_result(row: Row, key: str):
     # print(clean_string)
     tuple_value = ast.literal_eval(clean_string)
     # print(tuple_value)
-    longitudes, latitudes = tuple_value[0], tuple_value[1]
-    return longitudes, latitudes
+    latitudes, longitudes  = tuple_value[0], tuple_value[1]
+    return latitudes, longitudes
 
 
 def execute_query(
