@@ -12,6 +12,13 @@ from dash.dependencies import Input, Output, State
 from evaluatorapp import evaluator_layout, update_evaluator
 from postgres import aggregator
 
+
+
+import folium
+from folium.plugins import MarkerCluster
+
+
+
 longitudes, latitudes, income, centroid, rect = aggregator()
 income_mapping = {
     " 10001 to 25000": 2.5,
@@ -52,7 +59,7 @@ def plot_number_orders(longitudes, latitudes):
         data=go.Densitymapbox(
             lon=longitudes,
             lat=latitudes,
-            z=np.ones_like(latitudes),
+            #z=np.ones_like(latitudes),
             radius=5,
         ),
         layout=go.Layout(
@@ -69,36 +76,30 @@ def plot_number_orders(longitudes, latitudes):
     return figure
 
 
-def plot_number_orders(longitude_list, latitude_list):
-    trace = go.Scattergeo(
-        lon=longitude_list,
-        lat=latitude_list,
-        mode='markers',
-        marker=dict(
-            size=5,
-            color='red',
-            opacity=0.7,
-            symbol='circle'
-        )
-    )
 
-    # Create the layout for the map figure
-    layout = go.Layout(
-        title='Scatter Map',
-        showlegend=False,
-        geo=dict(
-            projection=dict(
-                type="gnomonic"
-            )
-        )
-    )
+def plot_number_orders_new(longitudes, latitudes):
+    coordinates = [
+        {'name': 'order', 'lon': lon, 'lat': lat}
+        for lon, lat in zip(longitudes, latitudes)
+    ]
 
-    # Create the map figure
-    fig = go.Figure(data=[trace], layout=layout)
-   # fig = px.scatter_geo(lat=latitudes, lon=longitudes,  # size='mag',
-    #                     title='Earthquakes Around the World')
-    return fig
+    # Create a Pandas DataFrame to hold the coordinates
+    df = pd.DataFrame(coordinates)
+    print("Create Folium Map")
+    # Create a map using Folium
+    m = folium.Map(location=[12.97, 77.59], zoom_start=12, control_scale=True)
 
+    # Add marker clusters to the map
+    marker_cluster = MarkerCluster().add_to(m)
+
+    # Add markers to the marker cluster
+    for _, row in df.iterrows():
+        folium.Marker(
+            location=[row['lat'], row['lon']],
+            popup=row['name']
+        ).add_to(marker_cluster)
+
+    return m._repr_html_()
 
 def plot_income(longitudes, latitudes, numerical_values):
     figure = go.Figure(
@@ -194,29 +195,14 @@ homelayout = dbc.Container(
                 dbc.Col(
                     [
                         dcc.Slider(
-                            0.0001,
-                            1,
                             0.01,
-                            value=2.0,
+                            2,
+                            0.01,
+                            marks={i: "{}".format(round((10 ** i) - 1), 2) for i in [0.1, 0.5, 1, 1.5, 2]},
+                            value=2,
                             id="epsilon",
-                            marks={
-                                0.1: "0.1",
-                                0.2: "0.2",
-                                0.3: "0.3",
-                                0.4: "0.4",
-                                0.5: "0.5",
-                                0.6: "0.6",
-                                0.7: "0.7",
-                                0.8: "0.8",
-                                0.9: "0.9",
-                                1.0: "1.0",
-                                2.0: "2.0",
-                                4.0: "4.0",
-                                5.0: "5.0",
-                                10.0: "10.0"
-                            },
                         ),
-                        html.Div(id="output_value"),
+                        html.Div(id="output_value_main"),
                     ],
                     width=2,
                 ),
@@ -254,18 +240,24 @@ homelayout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(
-                    dcc.Graph(id="density-heatmap"),
+                html.Iframe(
+                id='data_map',
+                srcDoc="",
+                width='90%',
+                height='500px'  ),
                     width=6,  # Set the width of the first column to 6
                 ),
                 dbc.Col(
+                    dcc.Graph(id="income_map"),
 
-                    dcc.Graph(
-                        id="density-heatmap2",
-                    ),
+                    #dcc.Graph(
+                     #   id="density-heatmap2",
+                    #),
                     width=6,  # Set the width of the second column to 6
                 ),
             ]
         ),
+
         dbc.Row(
             [
                 dbc.Col(
@@ -285,7 +277,8 @@ homelayout = dbc.Container(
                                 id="map-graph1",
                             )
                         ]
-                    )
+                    ),
+                    width=6,
                 ),
             ]
         ),
@@ -301,38 +294,38 @@ update_evaluator(app)
 creator_callbacks(app)
 
 
-@app.callback(Output("output_value", "children"), Input("epsilon", "value"))
-def display_value(value):
-    return f"Value: {value}"
+@app.callback(Output("output_value_main", "children"), Input("epsilon", "value"))
+def display_value(epsilon):
+    return f"Value: {int((10**epsilon)-1)}"
 
 
 @app.callback(
     [
         Output("output", "children"),
-        Output("density-heatmap", "figure"),
-        Output("density-heatmap2", "figure"),
+        Output("data_map", "srcDoc"),
+        Output("income_map", "figure"),
         Output("map-graph", "figure"),
         Output("map-graph1", "figure"),
     ],
     [State("epsilon", "value")],
     [Input("submit-button", "n_clicks")],
 )
-def update_variable(value, n_clicks):
+def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
+        epsilon = int((10**epsilon)-1)
         print("update")
-        longitudes, latitudes, income, centroid, rect = aggregator(value)
+        longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         # print(longitudes, latitudes, income, centroid, rect)
         numerical_values = [income_mapping[range_] for range_ in income]
-        figure1 = plot_number_orders(
+        figure1 = plot_number_orders_new(
             [float(i) for i in longitudes], [float(i) for i in latitudes]
         )
-        print("finished plot1")
         figure2 = plot_income(
             [float(i) for i in longitudes],
             [float(i) for i in latitudes],
             numerical_values,
         )
-        print("finished plot2")
+        print("finished plot1+2")
         print("update", centroid)
         figure3 = plot_centroid(centroid)
         print("finished centroid")

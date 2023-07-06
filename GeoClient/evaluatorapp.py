@@ -89,11 +89,11 @@ def evaluator_layout():
                             ),
                             html.Label("Epsilon: "),
                             dcc.Slider(
-                                0.001,
-                                2.5,
                                 0.01,
-                                marks={i: "{}".format((10 ** i)-1) for i in range(5)},
-                                value=0,
+                                2,
+                                0.01,
+                                marks={i: "{}".format(round((10 ** i) - 1), 2) for i in [0.1, 0.5, 1, 1.5, 2]},
+                                value=2,
                                 id="epsilon2",
                             ),
                             html.Div(id="output2"),
@@ -145,9 +145,9 @@ def evaluator_layout():
 
 
 def update_evaluator(app):
-    @app.callback(Output("output2", "children"), Input("num", "value"), Input("epsilon2", "value"))
-    def display_value(value):
-        return f"Number of Requests: {int(10**value)}, Epsilon: {int(10**value-1)}"
+    @app.callback(Output("output2", "children"), [Input("num", "value"), Input("epsilon2", "value")])
+    def display_value(number, epsilon):
+        return f"Number of Requests: {int(10**number)}, Epsilon: {int(10**epsilon-1)}"
 
     @app.callback(
         Output("output_evaluation", "children"),
