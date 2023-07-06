@@ -39,6 +39,8 @@ def fetch_dp_centroids(epsilon, n):
 def plot_3d_dp_centroids(x, y, z, sf):
     smoothed_z = ndimage.gaussian_filter(z, sigma=sf)
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=smoothed_z)])
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                                  highlightcolor="limegreen", project_z=True))
     fig.update_layout(
         title=f"Differential Private Centroid with Smoothing Factor: {sf}",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
@@ -59,6 +61,8 @@ def plot_3d_centroids(n):
         z[int(latitudes[i] - lat_min), int(longitudes[i] - lon_min)] += 1
 
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=z)])
+    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
+                                  highlightcolor="limegreen", project_z=True))
     fig.update_layout(
         title="Received Centroids without Differential Privacy",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
