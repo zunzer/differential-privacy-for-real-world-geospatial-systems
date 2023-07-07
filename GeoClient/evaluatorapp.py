@@ -147,7 +147,7 @@ def evaluator_layout():
 def update_evaluator(app):
     @app.callback(Output("output2", "children"), [Input("num", "value"), Input("epsilon2", "value")])
     def display_value(number, epsilon):
-        return f"Number of Requests: {int(10**number)}, Epsilon: {int(10**epsilon-1)}"
+        return f"Number of Requests: {int(10**number)}, Epsilon: {float(10**epsilon-1)}"
 
     @app.callback(
         Output("output_evaluation", "children"),
@@ -160,7 +160,7 @@ def update_evaluator(app):
     )
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
-        epsilon = int((10**epsilon)-1)
+        epsilon = float((10**epsilon)-1)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
         print("Plo1 ready")

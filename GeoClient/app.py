@@ -10,6 +10,7 @@ from creatorapp import creator_callbacks, creator_layout
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from evaluatorapp import evaluator_layout, update_evaluator
+from planareval import planar_layout, update_planar
 from postgres import aggregator
 
 
@@ -42,6 +43,7 @@ navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Home", href="/")),
         dbc.NavItem(dbc.NavLink("3D Analysis of Differential Privacy", href="/page1")),
+        dbc.NavItem(dbc.NavLink("Planar Analysis of Differential Privacy", href="/page3")),
         dbc.NavItem(dbc.NavLink("User Management", href="/page2")),
     ],
     brand="",
@@ -110,7 +112,7 @@ def plot_income(longitudes, latitudes, numerical_values):
             radius=30,
         ),
         layout=go.Layout(
-            title="Areas with the highest Income:",
+            #title="Areas with the highest Income:",
             mapbox=dict(
                 style="open-street-map",
                 center={"lat": 12.995, "lon": 77.5773},
@@ -130,8 +132,8 @@ def plot_centroid(centroid):
         zoom=10,
         size=[10],
     ).update_layout(
-        title="Centroid:",
-        height=650,
+        #title="Centroid:",
+        height=600,
         mapbox={
             "style": "open-street-map",
             "center": {
@@ -154,7 +156,7 @@ def plot_rect(rect):
         ),
         layout=go.Layout(
             height=650,
-            title="Bounding Rectangle:",
+            #title="Bounding Rectangle:",
             mapbox={
                 "style": "open-street-map",
                 "center": {
@@ -176,6 +178,11 @@ page1_layout = dbc.Container(
 # Define the page 2 layout
 page2_layout = dbc.Container(
     [navbar, creator_layout()],
+    fluid=True,
+)
+
+page3_layout = dbc.Container(
+    [navbar, planar_layout()],
     fluid=True,
 )
 
@@ -240,11 +247,26 @@ homelayout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(
+                html.P("Noised Order Locations:"),
+                    width=6,  # Set the width of the first column to 6
+                ),
+                dbc.Col(
+                    html.P("Noised Incomes:"),
+                    width=6,  # Set the width of the second column to 6
+                ),
+            ]
+        ),
+        dbc.Row(
+            [
+                dbc.Col([
+                html.Br(),
+                html.Br(),
                 html.Iframe(
                 id='data_map',
                 srcDoc="",
+                style ={"margin-top":"1cm", "margin-bottom":"1cm"},
                 width='90%',
-                height='500px'  ),
+                height='600'  )],
                     width=6,  # Set the width of the first column to 6
                 ),
                 dbc.Col(
@@ -257,7 +279,19 @@ homelayout = dbc.Container(
                 ),
             ]
         ),
-
+        html.Br(),
+        dbc.Row(
+            [
+                dbc.Col(
+                    html.P("Noised Centroid:"),
+                    width=6,  # Set the width of the first column to 6
+                ),
+                dbc.Col(
+                    html.P("Noised Bounding Rectangle:"),
+                    width=6,  # Set the width of the second column to 6
+                ),
+            ]
+        ),
         dbc.Row(
             [
                 dbc.Col(
@@ -291,12 +325,13 @@ app.layout = html.Div(
 )
 
 update_evaluator(app)
+update_planar(app)
 creator_callbacks(app)
 
 
 @app.callback(Output("output_value_main", "children"), Input("epsilon", "value"))
 def display_value(epsilon):
-    return f"Value: {int((10**epsilon)-1)}"
+    return f"Epsilon: {float((10**epsilon)-1)}"
 
 
 @app.callback(
@@ -312,7 +347,7 @@ def display_value(epsilon):
 )
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = int((10**epsilon)-1)
+        epsilon = float((10**epsilon)-1)
         print("update")
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         # print(longitudes, latitudes, income, centroid, rect)
@@ -333,7 +368,7 @@ def update_variable(epsilon, n_clicks):
         figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
         print("LEngth:", len(longitudes))
         return (
-            f'Refreshed: {datetime.now().strftime("%H:%M:%S")}',
+            f'Refreshed: {datetime.now().strftime("%H:%M:%S")} with ε = {epsilon} ',
             figure1,
             figure2,
             figure3,
@@ -351,6 +386,8 @@ def display_page(pathname):
         return page1_layout
     elif pathname == "/page2":
         return page2_layout
+    elif pathname == "/page3":
+        return page3_layout
     else:
         return homelayout
 
