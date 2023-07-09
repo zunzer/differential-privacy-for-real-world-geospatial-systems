@@ -74,9 +74,8 @@ def execute_query(
 
     if IS_IN_PROD:
         # connect to PostgreSQL
-        local_port = str(server.local_bind_port)
         engine = create_engine(
-            f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:{local_port}/{db_settings['db_name']}",
+            f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:5432/{db_settings['db_name']}",
         )
         insp = inspect(engine)
         with engine.connect() as connection:
