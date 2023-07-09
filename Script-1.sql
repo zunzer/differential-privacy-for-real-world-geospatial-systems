@@ -34,16 +34,6 @@ create or replace function geo_dp(i geometry, epsilon float) RETURNS geometry AS
 $$ LANGUAGE plpgsql;
 
 
--- create Python function after python is loaded
-CREATE or replace FUNCTION pymax (a integer, b integer)
-  RETURNS integer
-AS $$
-  if a > b:
-    return a
-  return b
-$$ LANGUAGE plpython3u;
-
-
 -- Demonstration for midterm
 select * from online_delivery_data
 
@@ -93,8 +83,7 @@ select private_centroid(10.0, 1)
 CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int, out longitudes text, out latitudes text)
 as $$
   from plpygis import Geometry, Point
-  from diffprivlib.mechanisms import Laplace
-  mechanism = Laplace(epsilon=epsilon, sensitivity=0.1)
+  from GeoPrivacy.mechanism import random_laplace_noise
   longitudes, latitudes = [], []
   for i in range(n):
 	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
@@ -102,11 +91,14 @@ as $$
 	  if point.type != "Point":
 		  return None
 	  gj = point.geojson
-	  dp_lon = mechanism.randomise(gj["coordinates"][0])
-	  dp_lat = mechanism.randomise(gj["coordinates"][1])
-	  longitudes.append(dp_lon)
-	  latitudes.append(dp_lat)
-  return longitudes, latitudes
+	  lon = gj["coordinates"][0]
+	  lat = gj["coordinates"][1]
+	  noise = random_laplace_noise(epsilon)
+	  new_lon = lon + noise[0]
+	  new_lat = lat + noise[1]
+	  longitudes.append(new_lon)
+	  latitudes.append(new_lat)
+  return latitudes, longitudes
 $$ LANGUAGE plpython3u;
 
 
@@ -119,8 +111,7 @@ select private_data(0.1)
 CREATE or REPLACE FUNCTION private_data(epsilon float)
 RETURNS text
 AS $$
- from plpygis import Geometry
- from plpygis import Point
+ from plpygis import Geometry, Point
  from GeoPrivacy.mechanism import random_laplace_noise
  srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
  plpy.info(srows)

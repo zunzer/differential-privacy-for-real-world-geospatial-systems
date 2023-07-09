@@ -2,6 +2,7 @@ from datetime import datetime
 
 import dash
 import dash_bootstrap_components as dbc
+import folium
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -10,15 +11,9 @@ from creatorapp import creator_callbacks, creator_layout
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from evaluatorapp import evaluator_layout, update_evaluator
+from folium.plugins import MarkerCluster
 from planareval import planar_layout, update_planar
 from postgres import aggregator
-
-
-
-import folium
-from folium.plugins import MarkerCluster
-
-
 
 longitudes, latitudes, income, centroid, rect = aggregator()
 income_mapping = {
@@ -43,7 +38,9 @@ navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink("Home", href="/")),
         dbc.NavItem(dbc.NavLink("3D Analysis of Differential Privacy", href="/page1")),
-        dbc.NavItem(dbc.NavLink("Planar Analysis of Differential Privacy", href="/page3")),
+        dbc.NavItem(
+            dbc.NavLink("Planar Analysis of Differential Privacy", href="/page3")
+        ),
         dbc.NavItem(dbc.NavLink("User Management", href="/page2")),
     ],
     brand="",
@@ -61,7 +58,7 @@ def plot_number_orders(longitudes, latitudes):
         data=go.Densitymapbox(
             lon=longitudes,
             lat=latitudes,
-            #z=np.ones_like(latitudes),
+            # z=np.ones_like(latitudes),
             radius=5,
         ),
         layout=go.Layout(
@@ -78,10 +75,9 @@ def plot_number_orders(longitudes, latitudes):
     return figure
 
 
-
 def plot_number_orders_new(longitudes, latitudes):
     coordinates = [
-        {'name': 'order', 'lon': lon, 'lat': lat}
+        {"name": "order", "lon": lon, "lat": lat}
         for lon, lat in zip(longitudes, latitudes)
     ]
 
@@ -96,12 +92,12 @@ def plot_number_orders_new(longitudes, latitudes):
 
     # Add markers to the marker cluster
     for _, row in df.iterrows():
-        folium.Marker(
-            location=[row['lat'], row['lon']],
-            popup=row['name']
-        ).add_to(marker_cluster)
+        folium.Marker(location=[row["lat"], row["lon"]], popup=row["name"]).add_to(
+            marker_cluster
+        )
 
     return m._repr_html_()
+
 
 def plot_income(longitudes, latitudes, numerical_values):
     figure = go.Figure(
@@ -112,7 +108,7 @@ def plot_income(longitudes, latitudes, numerical_values):
             radius=30,
         ),
         layout=go.Layout(
-            #title="Areas with the highest Income:",
+            # title="Areas with the highest Income:",
             mapbox=dict(
                 style="open-street-map",
                 center={"lat": 12.995, "lon": 77.5773},
@@ -132,7 +128,7 @@ def plot_centroid(centroid):
         zoom=10,
         size=[10],
     ).update_layout(
-        #title="Centroid:",
+        # title="Centroid:",
         height=600,
         mapbox={
             "style": "open-street-map",
@@ -156,7 +152,7 @@ def plot_rect(rect):
         ),
         layout=go.Layout(
             height=650,
-            #title="Bounding Rectangle:",
+            # title="Bounding Rectangle:",
             mapbox={
                 "style": "open-street-map",
                 "center": {
@@ -205,7 +201,10 @@ homelayout = dbc.Container(
                             0.01,
                             2,
                             0.01,
-                            marks={i: "{}".format(round((10 ** i) - 1), 2) for i in [0.1, 0.5, 1, 1.5, 2]},
+                            marks={
+                                i: "{}".format(round((10**i) - 1), 2)
+                                for i in [0.1, 0.5, 1, 1.5, 2]
+                            },
                             value=2,
                             id="epsilon",
                         ),
@@ -247,7 +246,7 @@ homelayout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(
-                html.P("Noised Order Locations:"),
+                    html.P("Noised Order Locations:"),
                     width=6,  # Set the width of the first column to 6
                 ),
                 dbc.Col(
@@ -258,23 +257,25 @@ homelayout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col([
-                html.Br(),
-                html.Br(),
-                html.Iframe(
-                id='data_map',
-                srcDoc="",
-                style ={"margin-top":"1cm", "margin-bottom":"1cm"},
-                width='90%',
-                height='600'  )],
+                dbc.Col(
+                    [
+                        html.Br(),
+                        html.Br(),
+                        html.Iframe(
+                            id="data_map",
+                            srcDoc="",
+                            style={"margin-top": "1cm", "margin-bottom": "1cm"},
+                            width="90%",
+                            height="600",
+                        ),
+                    ],
                     width=6,  # Set the width of the first column to 6
                 ),
                 dbc.Col(
                     dcc.Graph(id="income_map"),
-
-                    #dcc.Graph(
-                     #   id="density-heatmap2",
-                    #),
+                    # dcc.Graph(
+                    #   id="density-heatmap2",
+                    # ),
                     width=6,  # Set the width of the second column to 6
                 ),
             ]
@@ -347,7 +348,7 @@ def display_value(epsilon):
 )
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = float((10**epsilon)-1)
+        epsilon = float((10**epsilon) - 1)
         print("update")
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         # print(longitudes, latitudes, income, centroid, rect)

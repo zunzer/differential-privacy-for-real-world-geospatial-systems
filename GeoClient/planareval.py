@@ -1,19 +1,18 @@
+import math
+
 import dash
 import dash_bootstrap_components as dbc
+import folium
+import haversine as hs
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import scipy.ndimage as ndimage
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
-
-import folium
 from folium.plugins import MarkerCluster
+from postgres import aggregator, clean_centroid_result, execute_query
 
-from postgres import clean_centroid_result, execute_query, aggregator
-
-import math
-import haversine as hs
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     # Convert degrees to radians
@@ -25,11 +24,15 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     # Haversine formula
     dlon = lon2_rad - lon1_rad
     dlat = lat2_rad - lat1_rad
-    a = math.sin(dlat/2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon/2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distance = 6371 * c  # Earth radius in kilometers
 
     return distance
+
 
 def plot(n, epsilon):
     # for i in number:
@@ -41,7 +44,7 @@ def plot(n, epsilon):
     longitudes, latitudes, income, centroid, rect = aggregator(99)
     real_long = [float(i) for i in longitudes]
     real_lat = [float(i) for i in latitudes]
-    radius = [0]*len(real_lat)
+    radius = [0] * len(real_lat)
     for i in range(n):
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         long = [float(i) for i in longitudes]
@@ -52,9 +55,9 @@ def plot(n, epsilon):
                 radius[k] = new_max
 
     coordinates = [
-            {'name': 'order', 'lon': lon, 'lat': lat, 'rad':rad}
-            for lon, lat, rad in zip(real_long, real_lat, radius)
-        ]
+        {"name": "order", "lon": lon, "lat": lat, "rad": rad}
+        for lon, lat, rad in zip(real_long, real_lat, radius)
+    ]
 
     df = pd.DataFrame(coordinates)
     print(df)
@@ -64,17 +67,16 @@ def plot(n, epsilon):
 
     for _, marker_data in df.iterrows():
         print(marker_data)
-        marker_location = [marker_data['lat'], marker_data['lon']]
-        radius = marker_data['rad']
+        marker_location = [marker_data["lat"], marker_data["lon"]]
+        radius = marker_data["rad"]
         folium.Circle(
             location=marker_location,
             radius=radius,
-            color='blue',
+            color="blue",
             fill=True,
-            fill_color='blue',
+            fill_color="blue",
         ).add_to(marker_cluster2)
     return m2._repr_html_()
-
 
 
 def planar_layout():
@@ -99,7 +101,10 @@ def planar_layout():
                                 0.01,
                                 2,
                                 0.01,
-                                marks={i: "{}".format(round((10 ** i) - 1), 2) for i in [0.1, 0.5, 1, 1.5, 2]},
+                                marks={
+                                    i: "{}".format(round((10**i) - 1), 2)
+                                    for i in [0.1, 0.5, 1, 1.5, 2]
+                                },
                                 value=2,
                                 id="epsilon4",
                             ),
@@ -139,11 +144,12 @@ def planar_layout():
             ),
             html.Br(),
             html.Iframe(
-                id='data_map4',
+                id="data_map4",
                 srcDoc="",
                 style={"margin-top": "1cm", "margin-bottom": "1cm"},
-                width='90%',
-                height='600'),
+                width="90%",
+                height="600",
+            ),
         ],
         style={"width": "100%"},
     )
@@ -154,7 +160,10 @@ def planar_layout():
 
 
 def update_planar(app):
-    @app.callback(Output("output4", "children"), [Input("num4", "value"), Input("epsilon4", "value")])
+    @app.callback(
+        Output("output4", "children"),
+        [Input("num4", "value"), Input("epsilon4", "value")],
+    )
     def display_value(number, epsilon):
         return f"Number of Requests: {int(10**number)}, Epsilon: {float(10**epsilon-1)}"
 
@@ -166,7 +175,7 @@ def update_planar(app):
     )
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
-        epsilon = float((10**epsilon)-1)
+        epsilon = float((10**epsilon) - 1)
         print("Start fetching")
 
         fig = plot(value, epsilon)

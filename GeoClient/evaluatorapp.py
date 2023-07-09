@@ -39,8 +39,11 @@ def fetch_dp_centroids(epsilon, n):
 def plot_3d_dp_centroids(x, y, z, sf):
     smoothed_z = ndimage.gaussian_filter(z, sigma=sf)
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=smoothed_z)])
-    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
-                                  highlightcolor="limegreen", project_z=True))
+    fig.update_traces(
+        contours_z=dict(
+            show=True, usecolormap=True, highlightcolor="limegreen", project_z=True
+        )
+    )
     fig.update_layout(
         title=f"Differential Private Centroid with Smoothing Factor: {sf}",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
@@ -61,8 +64,11 @@ def plot_3d_centroids(n):
         z[int(latitudes[i] - lat_min), int(longitudes[i] - lon_min)] += 1
 
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=z)])
-    fig.update_traces(contours_z=dict(show=True, usecolormap=True,
-                                  highlightcolor="limegreen", project_z=True))
+    fig.update_traces(
+        contours_z=dict(
+            show=True, usecolormap=True, highlightcolor="limegreen", project_z=True
+        )
+    )
     fig.update_layout(
         title="Received Centroids without Differential Privacy",
         scene=dict(xaxis_title="X", yaxis_title="Y", zaxis_title="Z"),
@@ -92,7 +98,10 @@ def evaluator_layout():
                                 0.01,
                                 2,
                                 0.01,
-                                marks={i: "{}".format(round((10 ** i) - 1), 2) for i in [0.1, 0.5, 1, 1.5, 2]},
+                                marks={
+                                    i: "{}".format(round((10**i) - 1), 2)
+                                    for i in [0.1, 0.5, 1, 1.5, 2]
+                                },
                                 value=2,
                                 id="epsilon2",
                             ),
@@ -145,7 +154,10 @@ def evaluator_layout():
 
 
 def update_evaluator(app):
-    @app.callback(Output("output2", "children"), [Input("num", "value"), Input("epsilon2", "value")])
+    @app.callback(
+        Output("output2", "children"),
+        [Input("num", "value"), Input("epsilon2", "value")],
+    )
     def display_value(number, epsilon):
         return f"Number of Requests: {int(10**number)}, Epsilon: {float(10**epsilon-1)}"
 
@@ -160,7 +172,7 @@ def update_evaluator(app):
     )
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
-        epsilon = float((10**epsilon)-1)
+        epsilon = float((10**epsilon) - 1)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
         print("Plo1 ready")

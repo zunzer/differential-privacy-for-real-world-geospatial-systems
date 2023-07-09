@@ -9,7 +9,10 @@ from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
 
 
-def aggregator(epsilon: int = 1):
+IS_IN_PROD = False
+
+
+def aggregator(epsilon: int = 2):
     lat, long, incomes = [], [], []
     query_result = execute_query(
         f"SELECT private_data({epsilon})",
@@ -27,9 +30,11 @@ def aggregator(epsilon: int = 1):
     )
 
     centroid = execute_query(f"SELECT private_centroid({epsilon}, 1)")
-    clean_centroid = [clean_centroid_result(centroid, "private_centroid")[0][0], clean_centroid_result(centroid, "private_centroid")[1][0]]
+    clean_centroid = [
+        clean_centroid_result(centroid, "private_centroid")[0][0],
+        clean_centroid_result(centroid, "private_centroid")[1][0],
+    ]
     print("test1", clean_centroid)
-
 
     return (
         lat,
@@ -55,7 +60,7 @@ def clean_centroid_result(row: Row, key: str):
     # print(clean_string)
     tuple_value = ast.literal_eval(clean_string)
     # print(tuple_value)
-    latitudes, longitudes  = tuple_value[0], tuple_value[1]
+    latitudes, longitudes = tuple_value[0], tuple_value[1]
     return latitudes, longitudes
 
 
@@ -63,23 +68,11 @@ def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
     config = ConfigParser()
-    config.read("../settings.ini")
+    config.read("settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
 
-    with SSHTunnelForwarder(
-        (
-            ssh_settings["host_ip"],
-            int(ssh_settings["port"]),
-        ),  # Remote server IP and SSH port
-        ssh_username=ssh_settings["username"],
-        ssh_pkey=ssh_settings["pkey_path"],
-        ssh_private_key_password=ssh_settings["pkey_password"],
-        remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
-    ) as server:  # PostgreSQL server IP and sever port on remote machine
-        server.start()  # start ssh sever
-        print("Server connected via SSH")
-
+    if IS_IN_PROD:
         # connect to PostgreSQL
         local_port = str(server.local_bind_port)
         engine = create_engine(
@@ -100,3 +93,37 @@ def execute_query(
             else:
                 query_result = sql_query.fetchone()
                 return query_result
+    else:
+        with SSHTunnelForwarder(
+            (
+                ssh_settings["host_ip"],
+                int(ssh_settings["port"]),
+            ),  # Remote server IP and SSH port
+            ssh_username=ssh_settings["username"],
+            ssh_pkey=ssh_settings["pkey_path"],
+            ssh_private_key_password=ssh_settings["pkey_password"],
+            remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
+        ) as server:  # PostgreSQL server IP and sever port on remote machine
+            server.start()  # start ssh sever
+            print("Server connected via SSH")
+
+            # connect to PostgreSQL
+            local_port = str(server.local_bind_port)
+            engine = create_engine(
+                f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:{local_port}/{db_settings['db_name']}",
+            )
+            insp = inspect(engine)
+            with engine.connect() as connection:
+                # print(insp.get_table_names())
+                env_activation = connection.execute(
+                    text("SELECT activate_python_venv('/home/y_voigt/.venv');")
+                )
+                # print(query)
+                sql_query = connection.execute(text(query))
+                connection.close()
+                if unfetched_output:
+                    # print(type(sql_query))
+                    return sql_query
+                else:
+                    query_result = sql_query.fetchone()
+                    return query_result
