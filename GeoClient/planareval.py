@@ -62,8 +62,8 @@ def plot(n, epsilon):
     df = pd.DataFrame(coordinates)
     print(df)
     print("Create Folium Map")
-    m2 = folium.Map(location=[12.97, 77.59], zoom_start=12, control_scale=True)
-    marker_cluster2 = MarkerCluster().add_to(m2)
+    m2 = folium.Map(location=[12.97, 77.59],  tiles='cartodbpositron', zoom_start=12, control_scale=True)
+    #marker_cluster2 = MarkerCluster().add_to(m2)
 
     for _, marker_data in df.iterrows():
         print(marker_data)
@@ -75,7 +75,8 @@ def plot(n, epsilon):
             color="blue",
             fill=True,
             fill_color="blue",
-        ).add_to(marker_cluster2)
+        ).add_to(m2)
+
     return m2._repr_html_()
 
 
@@ -93,19 +94,19 @@ def planar_layout():
                                 4,
                                 0.01,
                                 marks={i: "{}".format(10**i) for i in range(5)},
-                                value=0,
+                                value=1.2,
                                 id="num4",
                             ),
                             html.Label("Epsilon: "),
                             dcc.Slider(
                                 0.01,
-                                2,
+                                1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10**i) - 1), 2)
-                                    for i in [0.1, 0.5, 1, 1.5, 2]
+                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
-                                value=2,
+                                value=1.5,
                                 id="epsilon4",
                             ),
                             html.Div(id="output4"),
@@ -128,9 +129,9 @@ def planar_layout():
                                                 "width": "50%",
                                                 "height": "1cm",
                                                 "display": "inline-block",
-                                                "backgroundColor": "#119dff",
+                                                "backgroundColor": "#0e1012",
                                                 "border": "none",
-                                                "color": "black",
+                                                "color": "white",
                                             },
                                         ),
                                         html.Div(id="output_evaluation4"),
@@ -165,7 +166,7 @@ def update_planar(app):
         [Input("num4", "value"), Input("epsilon4", "value")],
     )
     def display_value(number, epsilon):
-        return f"Number of Requests: {int(10**number)}, Epsilon: {float(10**epsilon-1)}"
+        return f"Number of Requests: {int(10**number)}, Epsilon: {round(float(10**epsilon-1),2)}"
 
     @app.callback(
         Output("output_evaluation4", "children"),
@@ -181,6 +182,6 @@ def update_planar(app):
         fig = plot(value, epsilon)
 
         return (
-            f"Display 3D Distribution for n={value} and e={epsilon}",
+            f"Display 3D Distribution for n={value} and e={round(epsilon,2)}",
             fig,
         )

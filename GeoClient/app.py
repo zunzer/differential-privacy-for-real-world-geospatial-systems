@@ -25,32 +25,12 @@ income_mapping = {
 }
 numerical_values = [income_mapping[range_] for range_ in income]
 
-
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True,
 )
 app.title = "Analytics Dashboard"
-
-# Define the navbar
-navbar = dbc.NavbarSimple(
-    children=[
-        dbc.NavItem(dbc.NavLink("Home", href="/")),
-        dbc.NavItem(dbc.NavLink("3D Analysis of Differential Privacy", href="/page1")),
-        dbc.NavItem(
-            dbc.NavLink("Planar Analysis of Differential Privacy", href="/page3")
-        ),
-        dbc.NavItem(dbc.NavLink("User Management", href="/page2")),
-    ],
-    brand="",
-    color="#0e1012",
-    dark=True,
-    style={
-        "height": "80px",
-        "line-height": "80px",
-    },
-)
 
 
 def plot_number_orders(longitudes, latitudes):
@@ -85,7 +65,7 @@ def plot_number_orders_new(longitudes, latitudes):
     df = pd.DataFrame(coordinates)
     print("Create Folium Map")
     # Create a map using Folium
-    m = folium.Map(location=[12.97, 77.59], zoom_start=12, control_scale=True)
+    m = folium.Map(location=[12.97, 77.59], tiles='cartodbpositron', zoom_start=12, control_scale=True)
 
     # Add marker clusters to the map
     marker_cluster = MarkerCluster().add_to(m)
@@ -166,46 +146,25 @@ def plot_rect(rect):
     return figure
 
 
-# Define the page 1 layout
-page1_layout = dbc.Container(
-    [navbar, evaluator_layout()],
-    fluid=True,
-)
-# Define the page 2 layout
-page2_layout = dbc.Container(
-    [navbar, creator_layout()],
-    fluid=True,
-)
-
-page3_layout = dbc.Container(
-    [navbar, planar_layout()],
-    fluid=True,
-)
-
 homelayout = dbc.Container(
     [
-        navbar,
         html.Br(),
         dbc.Row(
             [
-                dbc.Col(
-                    html.H1(
-                        "GDPR conform Analytics Dashboard for Food Delivery",
-                        className="mb-4",
-                    ),
-                    width=6,
-                ),
+                dbc.Col("",
+                        width=3,
+                        ),
                 dbc.Col(
                     [
                         dcc.Slider(
                             0.01,
-                            2,
+                            1.5,
                             0.01,
                             marks={
-                                i: "{}".format(round((10**i) - 1), 2)
-                                for i in [0.1, 0.5, 1, 1.5, 2]
+                                i: "{}".format(round((10 ** i) - 1), 2)
+                                for i in [0.1,0.3,0.5,0.7,1,1.2, 1.4]
                             },
-                            value=2,
+                            value=1.5,
                             id="epsilon",
                         ),
                         html.Div(id="output_value_main"),
@@ -321,9 +280,28 @@ homelayout = dbc.Container(
     fluid=True,
 )
 
-app.layout = html.Div(
-    children=[dcc.Location(id="url", refresh=False), html.Div(id="page-content")]
-)
+
+app.layout = html.Div([
+    html.Div(
+        html.H1('GDPR conform Analytics Dashboard for Food Delivery', style={'color': 'white', 'margin': '0'}),
+        style={
+            'background-color': '#0e1012',
+            "padding": "16px 32px",
+            "position": 'sticky'
+        }),
+    dbc.Tabs(
+        [
+            dbc.Tab(homelayout, label='Overview', style={'color': '#6c757d'}),
+            dbc.Tab(evaluator_layout(), label='3D Analysis', style={'color': '#6c757d'}),
+            dbc.Tab(planar_layout(), label='Planar Analysis', style={'color': '#6c757d'}),
+            dbc.Tab(creator_layout(), label='User Management', style={'color': '#6c757d'}),
+
+        ],
+        style={
+            'color': '#6c757d'
+        }
+    )
+])
 
 update_evaluator(app)
 update_planar(app)
@@ -332,7 +310,7 @@ creator_callbacks(app)
 
 @app.callback(Output("output_value_main", "children"), Input("epsilon", "value"))
 def display_value(epsilon):
-    return f"Epsilon: {float((10**epsilon)-1)}"
+    return f"Epsilon: {round(float((10 ** epsilon) - 1), 2)}"
 
 
 @app.callback(
@@ -348,9 +326,11 @@ def display_value(epsilon):
 )
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = float((10**epsilon) - 1)
+        epsilon = float((10 ** epsilon) - 1)
         print("update")
+        print("Started:", datetime.now())
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
+        print("Ended:", datetime.now())
         # print(longitudes, latitudes, income, centroid, rect)
         numerical_values = [income_mapping[range_] for range_ in income]
         figure1 = plot_number_orders_new(
@@ -369,7 +349,7 @@ def update_variable(epsilon, n_clicks):
         figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
         print("LEngth:", len(longitudes))
         return (
-            f'Refreshed: {datetime.now().strftime("%H:%M:%S")} with ε = {epsilon} ',
+            f'Refreshed: {datetime.now().strftime("%H:%M:%S")} with ε = {round(epsilon, 2)} ',
             figure1,
             figure2,
             figure3,
@@ -379,18 +359,6 @@ def update_variable(epsilon, n_clicks):
     return
 
     # Callback to update the page content based on the URL
-
-
-@app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def display_page(pathname):
-    if pathname == "/page1":
-        return page1_layout
-    elif pathname == "/page2":
-        return page2_layout
-    elif pathname == "/page3":
-        return page3_layout
-    else:
-        return homelayout
 
 
 if __name__ == "__main__":

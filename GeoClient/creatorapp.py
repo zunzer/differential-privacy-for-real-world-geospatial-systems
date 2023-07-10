@@ -11,7 +11,6 @@ from postgres import execute_query
 def creator_layout():
     layout = dbc.Container(
         [
-            html.H1("GDPR conform Analytics Dashboard for Food Delivery"),
             html.Br(),
             html.Div(
                 [
@@ -57,7 +56,7 @@ def creator_layout():
             html.Div(
                 [
                     dcc.Loading(
-                        id="loading",
+                        id="loading2",
                         type="circle",
                         children=[
                             html.Button(
@@ -69,9 +68,9 @@ def creator_layout():
                                     "width": "100%",
                                     "height": "1cm",
                                     "display": "inline-block",
-                                    "background-color": "#119dff",
+                                    "background-color": "#0e1012",
                                     "border": "none",
-                                    "color": "black",
+                                    "color": "white",
                                 },
                             ),
                             html.Div(id="output-submit"),
@@ -84,7 +83,7 @@ def creator_layout():
             html.Div(
                 [
                     dcc.Loading(
-                        id="loading",
+                        id="loading21",
                         type="circle",
                         children=[
                             html.Button(
@@ -96,9 +95,9 @@ def creator_layout():
                                     "width": "100%",
                                     "height": "1cm",
                                     "display": "inline-block",
-                                    "background-color": "#119dff",
+                                    "background-color": "#0e1012",
                                     "border": "none",
-                                    "color": "black",
+                                    "color": "white",
                                 },
                             ),
                             html.Div(id="output-delete"),

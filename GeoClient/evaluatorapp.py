@@ -90,19 +90,19 @@ def evaluator_layout():
                                 4,
                                 0.01,
                                 marks={i: "{}".format(10**i) for i in range(5)},
-                                value=0,
+                                value=1.2,
                                 id="num",
                             ),
                             html.Label("Epsilon: "),
                             dcc.Slider(
                                 0.01,
-                                2,
+                                1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10**i) - 1), 2)
-                                    for i in [0.1, 0.5, 1, 1.5, 2]
+                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
-                                value=2,
+                                value=1.5,
                                 id="epsilon2",
                             ),
                             html.Div(id="output2"),
@@ -113,7 +113,7 @@ def evaluator_layout():
                         html.Div(
                             [
                                 dcc.Loading(
-                                    id="loading",
+                                    id="loading3",
                                     type="circle",
                                     children=[
                                         html.Button(
@@ -125,9 +125,9 @@ def evaluator_layout():
                                                 "width": "50%",
                                                 "height": "1cm",
                                                 "display": "inline-block",
-                                                "backgroundColor": "#119dff",
+                                                "backgroundColor": "#0e1012",
                                                 "border": "none",
-                                                "color": "black",
+                                                "color": "white",
                                             },
                                         ),
                                         html.Div(id="output_evaluation"),
@@ -159,7 +159,7 @@ def update_evaluator(app):
         [Input("num", "value"), Input("epsilon2", "value")],
     )
     def display_value(number, epsilon):
-        return f"Number of Requests: {int(10**number)}, Epsilon: {float(10**epsilon-1)}"
+        return f"Number of Requests: {int(10**number)}, Epsilon: {round(float(10**epsilon-1),2)}"
 
     @app.callback(
         Output("output_evaluation", "children"),
@@ -182,7 +182,7 @@ def update_evaluator(app):
         fig4 = plot_3d_dp_centroids(x, y, z, 3)
         print("Received plots")
         return (
-            f"Display 3D Distribution for n={value} and e={epsilon}",
+            f"Display 3D Distribution for n={value} and e={round(epsilon,2)}",
             fig1,
             fig2,
             fig3,
