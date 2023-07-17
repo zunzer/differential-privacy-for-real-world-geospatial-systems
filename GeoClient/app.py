@@ -130,8 +130,8 @@ def plot_centroid(centroid):
 def plot_rect(rect):
     figure = go.Figure(
         data=go.Scattermapbox(
-            lat=[i[1] for i in rect],
-            lon=[i[0] for i in rect],
+            lat=[float(item[0]) for item in rect[0]],
+            lon=[float(item[1]) for item in rect[0]],
             fill="toself",
             marker={"size": 10, "color": "orange"},
         ),
@@ -362,7 +362,7 @@ def update_variable(epsilon, n_clicks):
         print("update", centroid)
         figure3 = plot_centroid(centroid)
         print("finished centroid")
-        # print(rect)
+        # print("rect", rect)
         figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
         # print("LEngth:", len(longitudes))
         return (

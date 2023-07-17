@@ -24,7 +24,7 @@ def aggregator(epsilon: int = 2):
         long.append(res[1])
         incomes.append(res[2].replace("]", "").replace("'", ""))
     rect = execute_query(
-        f"SELECT private_bounding_rect({epsilon})"
+        f"SELECT private_bounding_rect({epsilon}, 1)"
         # "SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
     )
 
@@ -39,18 +39,15 @@ def aggregator(epsilon: int = 2):
         long,
         incomes,
         clean_centroid,
-        get_rect(rect),
+        clean_bounding_rect_result(rect, "private_bounding_rect"),
     )  # centroid_lat, centroid_long, bounding_rect
 
 
-def get_centroid(point):
-    return [float(i) for i in point[0].replace("[", "").replace("]", "").split(", ")]
-
-
-def get_rect(rect):
-    return [
-        i.replace("[", "").replace("]", "").split(",") for i in rect[0].split("], [")
-    ]
+def clean_bounding_rect_result(row: Row, key: str):
+    clean_string = row._mapping[key].replace('"', "")
+    dict_value = ast.literal_eval(clean_string)
+    # print(dict_value)
+    return dict_value
 
 
 def clean_centroid_result(row: Row, key: str):
