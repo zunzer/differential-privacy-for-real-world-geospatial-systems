@@ -60,13 +60,18 @@ def plot(n, epsilon):
     ]
 
     df = pd.DataFrame(coordinates)
-    print(df)
+    # print(df)
     print("Create Folium Map")
-    m2 = folium.Map(location=[12.97, 77.59],  tiles='cartodbpositron', zoom_start=12, control_scale=True)
-    #marker_cluster2 = MarkerCluster().add_to(m2)
+    m2 = folium.Map(
+        location=[12.97, 77.59],
+        tiles="cartodbpositron",
+        zoom_start=12,
+        control_scale=True,
+    )
+    # marker_cluster2 = MarkerCluster().add_to(m2)
 
     for _, marker_data in df.iterrows():
-        print(marker_data)
+        # print(marker_data)
         marker_location = [marker_data["lat"], marker_data["lon"]]
         radius = marker_data["rad"]
         folium.Circle(
@@ -103,7 +108,7 @@ def planar_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    i: "{}".format(round((10**i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,

@@ -8,7 +8,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
 
-
 IS_IN_PROD = False
 
 
@@ -31,10 +30,9 @@ def aggregator(epsilon: int = 2):
 
     centroid = execute_query(f"SELECT private_centroid({epsilon}, 1)")
     clean_centroid = [
-        clean_centroid_result(centroid, "private_centroid")[0][0],
-        clean_centroid_result(centroid, "private_centroid")[1][0],
+        clean_centroid_result(centroid, "private_centroid")[0],
+        clean_centroid_result(centroid, "private_centroid")[1],
     ]
-    print("test1", clean_centroid)
 
     return (
         lat,
@@ -56,12 +54,16 @@ def get_rect(rect):
 
 
 def clean_centroid_result(row: Row, key: str):
-    clean_string = row._mapping[key].replace('"', "")
+    clean_string = row._mapping[key].replace('"', "").replace(">", "").replace("<", "")
     # print(clean_string)
     tuple_value = ast.literal_eval(clean_string)
     # print(tuple_value)
-    latitudes, longitudes = tuple_value[0], tuple_value[1]
-    return latitudes, longitudes
+    if len(tuple_value) <= 1:
+        coordinates = tuple_value[0]
+        latitudes, longitudes = coordinates[0], coordinates[1]
+        return latitudes, longitudes
+    else:
+        return tuple_value
 
 
 def execute_query(

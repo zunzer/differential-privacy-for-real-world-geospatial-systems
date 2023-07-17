@@ -80,25 +80,32 @@ $$ LANGUAGE plpython3u;
 -- create centroid dp function
 select private_centroid(10.0, 1)
 
-CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int, out longitudes text, out latitudes text)
-as $$
-  from plpygis import Geometry, Point
-  from GeoPrivacy.mechanism import random_laplace_noise
-  longitudes, latitudes = [], []
-  for i in range(n):
-	  geom = plpy.execute("select st_centroid(st_union(geom)) from public.online_delivery_data")
-	  point = Geometry(geom[0]['st_centroid'])
+CREATE or REPLACE FUNCTION private_centroid(epsilon float, n int)
+	RETURNS text
+AS $$
+ import geopandas as gpd
+ from plpygis import Geometry, Point
+ from GeoPrivacy.mechanism import random_laplace_noise
+ from shapely import Point as SPoint
+ epsilon_half = float(epsilon - (epsilon * 0.4))
+ centroids = []
+ for i in range(n):
+	 srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
+	 coordinates = []
+	 plpy.info(srows)
+	 for i in srows:
+	  point = Geometry(i['geom'])
 	  if point.type != "Point":
-		  return None
+	   pass
 	  gj = point.geojson
-	  lon = gj["coordinates"][0]
-	  lat = gj["coordinates"][1]
-	  noise = random_laplace_noise(epsilon)
-	  new_lon = lon + noise[0]
-	  new_lat = lat + noise[1]
-	  longitudes.append(new_lon)
-	  latitudes.append(new_lat)
-  return latitudes, longitudes
+	  noise = random_laplace_noise(epsilon_half)
+	  lon = gj["coordinates"][0] + noise[0]
+	  lat = gj["coordinates"][1] + noise[1]
+	  coordinates.append(SPoint(lat, lon))
+	 gdf = gpd.GeoDataFrame(geometry=coordinates)
+	 centroids.append(gdf.geometry.unary_union.centroid)
+ centroid_list = [(point.x, point.y) for point in centroids]
+ return centroid_list
 $$ LANGUAGE plpython3u;
 
 
@@ -167,4 +174,3 @@ AS $$
  plpy.info(res)
  return res
 $$ LANGUAGE plpython3u;
-

@@ -65,7 +65,12 @@ def plot_number_orders_new(longitudes, latitudes):
     df = pd.DataFrame(coordinates)
     print("Create Folium Map")
     # Create a map using Folium
-    m = folium.Map(location=[12.97, 77.59], tiles='cartodbpositron', zoom_start=12, control_scale=True)
+    m = folium.Map(
+        location=[12.97, 77.59],
+        tiles="cartodbpositron",
+        zoom_start=12,
+        control_scale=True,
+    )
 
     # Add marker clusters to the map
     marker_cluster = MarkerCluster().add_to(m)
@@ -151,9 +156,10 @@ homelayout = dbc.Container(
         html.Br(),
         dbc.Row(
             [
-                dbc.Col("",
-                        width=3,
-                        ),
+                dbc.Col(
+                    "",
+                    width=3,
+                ),
                 dbc.Col(
                     [
                         dcc.Slider(
@@ -161,8 +167,8 @@ homelayout = dbc.Container(
                             1.5,
                             0.01,
                             marks={
-                                i: "{}".format(round((10 ** i) - 1), 2)
-                                for i in [0.1,0.3,0.5,0.7,1,1.2, 1.4]
+                                i: "{}".format(round((10**i) - 1), 2)
+                                for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                             },
                             value=1.5,
                             id="epsilon",
@@ -281,27 +287,38 @@ homelayout = dbc.Container(
 )
 
 
-app.layout = html.Div([
-    html.Div(
-        html.H1('GDPR conform Analytics Dashboard for Food Delivery', style={'color': 'white', 'margin': '0'}),
-        style={
-            'background-color': '#0e1012',
-            "padding": "16px 32px",
-            "position": 'sticky'
-        }),
-    dbc.Tabs(
-        [
-            dbc.Tab(homelayout, label='Overview', style={'color': '#6c757d'}),
-            dbc.Tab(evaluator_layout(), label='3D Analysis', style={'color': '#6c757d'}),
-            dbc.Tab(planar_layout(), label='Planar Analysis', style={'color': '#6c757d'}),
-            dbc.Tab(creator_layout(), label='User Management', style={'color': '#6c757d'}),
-
-        ],
-        style={
-            'color': '#6c757d'
-        }
-    )
-])
+app.layout = html.Div(
+    [
+        html.Div(
+            html.H1(
+                "GDPR conform Analytics Dashboard for Food Delivery",
+                style={"color": "white", "margin": "0"},
+            ),
+            style={
+                "background-color": "#0e1012",
+                "padding": "16px 32px",
+                "position": "sticky",
+            },
+        ),
+        dbc.Tabs(
+            [
+                dbc.Tab(homelayout, label="Overview", style={"color": "#6c757d"}),
+                dbc.Tab(
+                    evaluator_layout(), label="3D Analysis", style={"color": "#6c757d"}
+                ),
+                dbc.Tab(
+                    planar_layout(), label="Planar Analysis", style={"color": "#6c757d"}
+                ),
+                dbc.Tab(
+                    creator_layout(),
+                    label="User Management",
+                    style={"color": "#6c757d"},
+                ),
+            ],
+            style={"color": "#6c757d"},
+        ),
+    ]
+)
 
 update_evaluator(app)
 update_planar(app)
@@ -326,7 +343,7 @@ def display_value(epsilon):
 )
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = float((10 ** epsilon) - 1)
+        epsilon = float((10**epsilon) - 1)
         print("update")
         print("Started:", datetime.now())
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
@@ -347,7 +364,7 @@ def update_variable(epsilon, n_clicks):
         print("finished centroid")
         # print(rect)
         figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
-        print("LEngth:", len(longitudes))
+        # print("LEngth:", len(longitudes))
         return (
             f'Refreshed: {datetime.now().strftime("%H:%M:%S")} with ε = {round(epsilon, 2)} ',
             figure1,

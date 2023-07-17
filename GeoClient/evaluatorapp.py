@@ -9,7 +9,6 @@ from postgres import clean_centroid_result, execute_query
 
 
 def request_dp_centroid(epsilon, n: int):
-    # test3 = session.execute(text("SELECT ST_AsText(st_centroid(st_union(geom))) FROM public.online_delivery_data"))
     res = execute_query(f"SELECT private_centroid({epsilon}, {n});")
     return clean_centroid_result(res, "private_centroid")
 
@@ -20,7 +19,8 @@ def request_centroid(n: int):
 
 
 def fetch_dp_centroids(epsilon, n):
-    longitudes, latitudes = request_dp_centroid(epsilon, n)
+    coordinate_list = request_dp_centroid(epsilon, n)
+    latitudes, longitudes = zip(*coordinate_list)
     lon_min = min(longitudes) - 5
     lon_max = max(longitudes) + 5
     lat_min = min(latitudes) - 5
@@ -52,7 +52,8 @@ def plot_3d_dp_centroids(x, y, z, sf):
 
 
 def plot_3d_centroids(n):
-    longitudes, latitudes = request_centroid(n)
+    coordinate_list = request_centroid(n)
+    latitudes, longitudes = coordinate_list[0], coordinate_list[1]
     lon_min = min(longitudes) - 5
     lon_max = max(longitudes) + 5
     lat_min = min(latitudes) - 5
@@ -99,7 +100,7 @@ def evaluator_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    i: "{}".format(round((10**i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,
