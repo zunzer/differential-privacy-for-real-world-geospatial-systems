@@ -8,11 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
 
+# if True, no ssh-tunnel will be established
 IS_IN_PROD = False
 
 
 def aggregator(epsilon: float = 2.0, n: int = 1):
-    # this function only works for n=1 at the moment
     query_result = execute_query(
         f"SELECT private_data({epsilon}, {n})",
     )
@@ -41,15 +41,12 @@ def aggregator(epsilon: float = 2.0, n: int = 1):
 def clean_bounding_rect_result(row: Row, key: str):
     clean_string = row._mapping[key].replace('"', "")
     dict_value = ast.literal_eval(clean_string)
-    # print(dict_value)
     return dict_value
 
 
 def clean_centroid_result(row: Row, key: str):
     clean_string = row._mapping[key].replace('"', "").replace(">", "").replace("<", "")
-    # print(clean_string)
     tuple_value = ast.literal_eval(clean_string)
-    # print(tuple_value)
     if len(tuple_value) <= 1:
         coordinates = tuple_value[0]
         latitudes, longitudes = coordinates[0], coordinates[1]
