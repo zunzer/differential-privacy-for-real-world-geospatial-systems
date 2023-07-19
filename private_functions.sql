@@ -9,7 +9,7 @@ AS $$
  from shapely import Point as SPoint
  bounding_rects = []
  for i in range(n):
-	 srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
+	 srows = plpy.execute("SELECT geom, monthly_income FROM public.online_delivery_data;")
 	 coordinates = []
 	 plpy.info(srows)
 	 for i in srows:
@@ -39,7 +39,7 @@ AS $$
  epsilon_fac = float(epsilon - (epsilon * 0.4))
  centroids = []
  for i in range(n):
-	 srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
+	 srows = plpy.execute("SELECT geom, monthly_income FROM public.online_delivery_data;")
 	 coordinates = []
 	 plpy.info(srows)
 	 for i in srows:
@@ -59,24 +59,23 @@ $$ LANGUAGE plpython3u;
 
 -- function for DP data for heatmap and clustering
 
-CREATE or REPLACE FUNCTION private_data(epsilon float)
+CREATE or REPLACE FUNCTION private_data(epsilon float, n int)
 RETURNS text
 AS $$
  from plpygis import Geometry, Point
  from GeoPrivacy.mechanism import random_laplace_noise
- srows = plpy.execute("select geom, monthly_income from public.online_delivery_data")
- plpy.info(srows)
- res = []
- for i in srows:
-  point = Geometry(i['geom'])
-  if point.type != "Point":
-   return None
-  gj = point.geojson
-  lon = gj["coordinates"][0]
-  lat = gj["coordinates"][1]
-  noise = random_laplace_noise(epsilon)
-  new_lon = lon + noise[0]
-  new_lat = lat + noise[1]
-  res.append([new_lon, new_lat, i['monthly_income']])
+ for i in range(n):
+	 srows = plpy.execute("SELECT geom, monthly_income FROM public.online_delivery_data;")
+	 plpy.info(srows)
+	 res = []
+	 for i in srows:
+	  point = Geometry(i['geom'])
+	  if point.type != "Point":
+	   return None
+	  gj = point.geojson
+	  noise = random_laplace_noise(epsilon)
+	  lon = gj["coordinates"][0] + noise[0]
+	  lat = gj["coordinates"][1] + noise[1]
+	  res.append([lon, lat, i['monthly_income']])
  return res
 $$ LANGUAGE plpython3u;

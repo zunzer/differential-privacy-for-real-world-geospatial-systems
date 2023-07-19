@@ -41,7 +41,7 @@ def plot(n, epsilon):
     # plot centers
     # plot max in radius
     res = execute_query(f"SELECT real_centroid({n});")
-    longitudes, latitudes, income, centroid, rect = aggregator(99)
+    longitudes, latitudes, income, centroid, rect = aggregator(99.0)
     real_long = [float(i) for i in longitudes]
     real_lat = [float(i) for i in latitudes]
     radius = [0] * len(real_lat)
@@ -60,7 +60,6 @@ def plot(n, epsilon):
     ]
 
     df = pd.DataFrame(coordinates)
-    # print(df)
     print("Create Folium Map")
     m2 = folium.Map(
         location=[12.97, 77.59],

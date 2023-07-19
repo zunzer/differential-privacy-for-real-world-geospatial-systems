@@ -11,36 +11,31 @@ from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
 IS_IN_PROD = False
 
 
-def aggregator(epsilon: int = 2):
-    lat, long, incomes = [], [], []
+def aggregator(epsilon: float = 2.0, n: int = 1):
+    # this function only works for n=1 at the moment
     query_result = execute_query(
-        f"SELECT private_data({epsilon})",
-        # "SELECT ST_AsText(geom), monthly_income FROM public.online_delivery_data",
+        f"SELECT private_data({epsilon}, {n})",
     )
-    x = query_result[0].split("], [")
-    for i in x:
-        res = i.split(",")
-        lat.append(res[0].replace("[", ""))
-        long.append(res[1])
-        incomes.append(res[2].replace("]", "").replace("'", ""))
-    rect = execute_query(
-        f"SELECT private_bounding_rect({epsilon}, 1)"
-        # "SELECT ST_AsText(ST_Envelope(st_union(geom))) FROM public.online_delivery_data"
+    private_data_result = clean_private_data(query_result, "private_data")
+    lat, long, incomes = (
+        [x[0] for x in private_data_result],
+        [x[1] for x in private_data_result],
+        [x[2] for x in private_data_result],
     )
 
-    centroid = execute_query(f"SELECT private_centroid({epsilon}, 1)")
-    clean_centroid = [
-        clean_centroid_result(centroid, "private_centroid")[0],
-        clean_centroid_result(centroid, "private_centroid")[1],
-    ]
+    rect = execute_query(f"SELECT private_bounding_rect({epsilon}, {n})")
+    clean_rect = clean_bounding_rect_result(rect, "private_bounding_rect")
+
+    centroid = execute_query(f"SELECT private_centroid({epsilon}, {n})")
+    clean_centroid = clean_centroid_result(centroid, "private_centroid")
 
     return (
         lat,
         long,
         incomes,
         clean_centroid,
-        clean_bounding_rect_result(rect, "private_bounding_rect"),
-    )  # centroid_lat, centroid_long, bounding_rect
+        clean_rect,
+    )
 
 
 def clean_bounding_rect_result(row: Row, key: str):
@@ -61,6 +56,12 @@ def clean_centroid_result(row: Row, key: str):
         return latitudes, longitudes
     else:
         return tuple_value
+
+
+def clean_private_data(row: Row, key: str):
+    clean_string = row._mapping[key].replace('"', "")
+    dict_value = ast.literal_eval(clean_string)
+    return dict_value
 
 
 def execute_query(
@@ -118,10 +119,12 @@ def execute_query(
                 )
                 # print(query)
                 sql_query = connection.execute(text(query))
-                connection.close()
                 if unfetched_output:
                     # print(type(sql_query))
+                    connection.commit()
+                    connection.close()
                     return sql_query
                 else:
                     query_result = sql_query.fetchone()
+                    connection.close()
                     return query_result

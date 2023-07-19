@@ -17,11 +17,11 @@ from postgres import aggregator
 
 longitudes, latitudes, income, centroid, rect = aggregator()
 income_mapping = {
-    " 10001 to 25000": 2.5,
-    " 25001 to 50000": 5,
-    " More than 50000": 10,
-    " Below Rs.10000": 1,
-    " No Income": 0,
+    "10001 to 25000": 2.5,
+    "25001 to 50000": 5,
+    "More than 50000": 10,
+    "Below Rs.10000": 1,
+    "No Income": 0,
 }
 numerical_values = [income_mapping[range_] for range_ in income]
 
@@ -359,7 +359,7 @@ def update_variable(epsilon, n_clicks):
             numerical_values,
         )
         print("finished plot1+2")
-        print("update", centroid)
+        # print("update", centroid)
         figure3 = plot_centroid(centroid)
         print("finished centroid")
         # print("rect", rect)

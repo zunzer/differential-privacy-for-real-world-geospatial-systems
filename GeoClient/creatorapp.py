@@ -125,15 +125,25 @@ def creator_callbacks(app):
         Input("submit-query", "n_clicks"),
     )
     def display_value(long, lat, income, nclicks):
-        if nclicks > 0:
+        max_index = execute_query(
+            "SELECT MAX(index) FROM public.online_delivery_data;"
+        )._mapping["max"]
+        if (
+            nclicks > 0
+            and type(long) == float
+            and type(lat) == float
+            and abs(lat) < 90.0
+            and abs(long) < 180.0
+        ):
             print("Execute insert")
             _ = execute_query(
-                "INSERT INTO online_delivery_data VALUES (388, 20, 'Female', 'Married', 'Student','"
-                + str(income)
-                + "', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral',	'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT (65.9901232886963 55.5953903123242)', 4326));"
+                f"INSERT INTO public.online_delivery_data VALUES ({int(max_index) + 1}, 20, 'Female', 'Married', 'Student','{str(income)}', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral', 'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT ({long} {lat})', 4326));",
+                unfetched_output=True,
             )  # ST_GeometryFromText('POINT (" +str(long) + " " + str(lat) +")', 4326));")
             print("Executed insert")
             return f"Value: {long},{lat},{income}, {nclicks}"
+        elif nclicks > 0:
+            return "Invalid coordinates. Coordinates have to be entered as a float. (e.g. 32.215)"
         else:
             return
 
@@ -144,9 +154,10 @@ def creator_callbacks(app):
         if nclicks > 0:
             print("Execute delete")
             _ = execute_query(
-                'DELETE FROM public.online_delivery_data WHERE "index"=388'
+                "DELETE FROM public.online_delivery_data WHERE index >= 388;",  # original dataset only consists of 387 entries
+                unfetched_output=True,
             )
             print("Finished delete")
-            return f"Value: {0}"
+            return "All values deleted"
         else:
             return
