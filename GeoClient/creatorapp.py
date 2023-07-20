@@ -136,20 +136,23 @@ def creator_callbacks(app):
             and abs(long) < 180.0
         ):
             print("Execute insert")
+            # add a new database entry based on the selected coordinates and income values
             _ = execute_query(
                 f"INSERT INTO public.online_delivery_data VALUES ({int(max_index) + 1}, 20, 'Female', 'Married', 'Student','{str(income)}', 'Post Graduate', 3, 560001, 'Food delivery apps', 'Web browser', 'Breakfast', 'Lunch', 'Non Veg foods (Lunch / Dinner)', 'Bakery items (snacks)', 'Neutral', 'Neutral',	'Neutral',	'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral',	'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Agree', 'Agree',	'Agree', 'Agree', 'Agree', 'Agree',	'Yes', 'Weekend (Sat & Sun)', '30 minutes', 'Agree', 'Neutral', 'Neutral', 'Neutral', 'Neutral', 'Yes', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Moderately Important', 'Yes', 'TEST ENTRY', ST_GeometryFromText('POINT ({long} {lat})', 4326));",
                 unfetched_output=True,
-            )  # ST_GeometryFromText('POINT (" +str(long) + " " + str(lat) +")', 4326));")
+            )
             print("Executed insert")
             return f"Value: {long},{lat},{income}, {nclicks}"
         elif nclicks > 0:
             return "Invalid coordinates. Coordinates have to be entered as a float. (e.g. 32.215)"
         else:
+            print("Insert failed")
             return
 
     @app.callback(
         Output("output-delete", "children"), Input("delete-query", "n_clicks")
     )
+    # delete all new user added vlues from the database
     def display_value(nclicks):
         if nclicks > 0:
             print("Execute delete")
@@ -160,4 +163,5 @@ def creator_callbacks(app):
             print("Finished delete")
             return "All values deleted"
         else:
+            print("Deletion failed")
             return

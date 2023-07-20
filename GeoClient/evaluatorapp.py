@@ -8,16 +8,19 @@ from dash.dependencies import Input, Output, State
 from postgres import clean_centroid_result, execute_query
 
 
+# requests a private centroid and returns a dict of centroids
 def request_dp_centroid(epsilon, n: int):
     res = execute_query(f"SELECT private_centroid({epsilon}, {n});")
     return clean_centroid_result(res, "private_centroid")
 
 
+# requests a real centroid and returns a dict of centroids
 def request_centroid(n: int):
     res = execute_query(f"SELECT real_centroid({n});")
     return clean_centroid_result(res, "real_centroid")
 
 
+# fetch private centroids and prepare them for plotting within the 3D evaluation
 def fetch_dp_centroids(epsilon, n):
     coordinate_list = request_dp_centroid(epsilon, n)
     latitudes, longitudes = zip(*coordinate_list)
@@ -36,6 +39,8 @@ def fetch_dp_centroids(epsilon, n):
     return x, y, z
 
 
+# prepare the private centroids and plot them within the 3D evaluationn
+# applies gaussian smoothing of the aggregated data for visual purposes
 def plot_3d_dp_centroids(x, y, z, sf):
     smoothed_z = ndimage.gaussian_filter(z, sigma=sf)
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=smoothed_z)])
@@ -51,6 +56,7 @@ def plot_3d_dp_centroids(x, y, z, sf):
     return fig
 
 
+# plot the received real centroids within the 3D evaluation
 def plot_3d_centroids(n):
     coordinate_list = request_centroid(n)
     latitudes, longitudes = coordinate_list[0], coordinate_list[1]
@@ -171,6 +177,7 @@ def update_evaluator(app):
         [State("num", "value"), State("epsilon2", "value")],
         [Input("evaluate-button", "n_clicks")],
     )
+    # update the plotted centroid distributions by regenrating the plots with new input values for epsilon and n
     def update_figure(value, epsilon, n_clicks):
         value = int(10**value)
         epsilon = float((10**epsilon) - 1)

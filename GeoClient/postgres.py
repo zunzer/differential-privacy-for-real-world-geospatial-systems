@@ -2,16 +2,17 @@ import ast
 from configparser import ConfigParser
 from typing import Union
 
-# Run pip install sqlalchemy
 from sqlalchemy import CursorResult, Row, create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
-from sshtunnel import SSHTunnelForwarder  # Run pip install sshtunnel
+from sshtunnel import SSHTunnelForwarder
 
 # if True, no ssh-tunnel will be established
 IS_IN_PROD = False
 
 
+# main function for requesting data from all three DP-functions defined in the database
+# return a list of coordinates for heatmap and clustering, as well as a dict for the private centroids and bouding rectangles respectively
 def aggregator(epsilon: float = 2.0, n: int = 1):
     query_result = execute_query(
         f"SELECT private_data({epsilon}, {n})",
@@ -38,12 +39,14 @@ def aggregator(epsilon: float = 2.0, n: int = 1):
     )
 
 
+# serialize output from private bounding rectangle database function for later use
 def clean_bounding_rect_result(row: Row, key: str):
     clean_string = row._mapping[key].replace('"', "")
     dict_value = ast.literal_eval(clean_string)
     return dict_value
 
 
+# serialize output from private centroid database function for later use
 def clean_centroid_result(row: Row, key: str):
     clean_string = row._mapping[key].replace('"', "").replace(">", "").replace("<", "")
     tuple_value = ast.literal_eval(clean_string)
@@ -55,12 +58,18 @@ def clean_centroid_result(row: Row, key: str):
         return tuple_value
 
 
+# serialize output from private data function for later use
 def clean_private_data(row: Row, key: str):
     clean_string = row._mapping[key].replace('"', "")
     dict_value = ast.literal_eval(clean_string)
     return dict_value
 
 
+# main function for establishing a database connection as well as handling and executing queries on the database
+# when used from a machine different than the database machine, an ssh-tunnel can be used to establish a secure connection with the remote database server
+# reads important credentials from settings.ini-file, for the ssh and database connection
+# activates the virtual environment needed for the database function imports
+# enables the return of either fetched output for SELECT-queries or unfetched output for a more verbose handling of SELECT-queries or SQL-commands that return nothing
 def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
@@ -76,15 +85,12 @@ def execute_query(
         )
         insp = inspect(engine)
         with engine.connect() as connection:
-            # print(insp.get_table_names())
             env_activation = connection.execute(
                 text("SELECT activate_python_venv('/home/y_voigt/.venv');")
             )
-            # print(query)
             sql_query = connection.execute(text(query))
             connection.close()
             if unfetched_output:
-                # print(type(sql_query))
                 return sql_query
             else:
                 query_result = sql_query.fetchone()
@@ -110,14 +116,11 @@ def execute_query(
             )
             insp = inspect(engine)
             with engine.connect() as connection:
-                # print(insp.get_table_names())
                 env_activation = connection.execute(
                     text("SELECT activate_python_venv('/home/y_voigt/.venv');")
                 )
-                # print(query)
                 sql_query = connection.execute(text(query))
                 if unfetched_output:
-                    # print(type(sql_query))
                     connection.commit()
                     connection.close()
                     return sql_query

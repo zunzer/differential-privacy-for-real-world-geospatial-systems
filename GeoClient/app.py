@@ -15,7 +15,10 @@ from folium.plugins import MarkerCluster
 from planareval import planar_layout, update_planar
 from postgres import aggregator
 
+# Execute a aggregation to get initial value when starting up the Dashboard.
 longitudes, latitudes, income, centroid, rect = aggregator()
+
+# maps the income strings from the original data to numerical values
 income_mapping = {
     "10001 to 25000": 2.5,
     "25001 to 50000": 5,
@@ -33,6 +36,7 @@ app = dash.Dash(
 app.title = "Analytics Dashboard"
 
 
+# Heatmap of areas with the highest number of orders
 def plot_number_orders(longitudes, latitudes):
     figure = go.Figure(
         data=go.Densitymapbox(
@@ -55,6 +59,7 @@ def plot_number_orders(longitudes, latitudes):
     return figure
 
 
+# Clustering map for the number of orders within a certain map area
 def plot_number_orders_new(longitudes, latitudes):
     coordinates = [
         {"name": "order", "lon": lon, "lat": lat}
@@ -84,6 +89,7 @@ def plot_number_orders_new(longitudes, latitudes):
     return m._repr_html_()
 
 
+# Heatmap of areas with the highest mean income
 def plot_income(longitudes, latitudes, numerical_values):
     figure = go.Figure(
         data=go.Densitymapbox(
@@ -96,6 +102,7 @@ def plot_income(longitudes, latitudes, numerical_values):
             # title="Areas with the highest Income:",
             mapbox=dict(
                 style="open-street-map",
+                # Map center
                 center={"lat": 12.995, "lon": 77.5773},
                 zoom=10,
             ),
@@ -105,8 +112,8 @@ def plot_income(longitudes, latitudes, numerical_values):
     return figure
 
 
+# plots the centroid based on the requested location coordinates
 def plot_centroid(centroid):
-    # print("plot", centroid)
     figure = px.scatter_mapbox(
         lat=[centroid[0]],
         lon=[centroid[1]],
@@ -127,6 +134,7 @@ def plot_centroid(centroid):
     return figure
 
 
+# plots the bounding rectangles for the requested location coordinates
 def plot_rect(rect):
     figure = go.Figure(
         data=go.Scattermapbox(
@@ -140,10 +148,11 @@ def plot_rect(rect):
             # title="Bounding Rectangle:",
             mapbox={
                 "style": "open-street-map",
+                # Map Center
                 "center": {
                     "lat": 12.977,
                     "lon": 77.5773,
-                },  # Set the map's center
+                },
                 "zoom": 9,
             },
         ),
@@ -151,6 +160,7 @@ def plot_rect(rect):
     return figure
 
 
+# definition of the HTML-Layout for the homepage
 homelayout = dbc.Container(
     [
         html.Br(),
@@ -341,6 +351,8 @@ def display_value(epsilon):
     [State("epsilon", "value")],
     [Input("submit-button", "n_clicks")],
 )
+
+# update all plots based on the selected epsilon value
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
         epsilon = float((10**epsilon) - 1)
@@ -348,7 +360,6 @@ def update_variable(epsilon, n_clicks):
         print("Started:", datetime.now())
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         print("Ended:", datetime.now())
-        # print(longitudes, latitudes, income, centroid, rect)
         numerical_values = [income_mapping[range_] for range_ in income]
         figure1 = plot_number_orders_new(
             [float(i) for i in longitudes], [float(i) for i in latitudes]
@@ -359,12 +370,9 @@ def update_variable(epsilon, n_clicks):
             numerical_values,
         )
         print("finished plot1+2")
-        # print("update", centroid)
         figure3 = plot_centroid(centroid)
         print("finished centroid")
-        # print("rect", rect)
-        figure4 = plot_rect(rect)  # TODO: It has to stay a rectangle
-        # print("LEngth:", len(longitudes))
+        figure4 = plot_rect(rect)
         return (
             f'Refreshed: {datetime.now().strftime("%H:%M:%S")} with ε = {round(epsilon, 2)} ',
             figure1,
@@ -378,5 +386,7 @@ def update_variable(epsilon, n_clicks):
     # Callback to update the page content based on the URL
 
 
+# entry point of the application
+# starts the dashboard server
 if __name__ == "__main__":
     app.run_server(debug=True)

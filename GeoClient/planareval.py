@@ -70,7 +70,6 @@ def plot(n, epsilon):
     # marker_cluster2 = MarkerCluster().add_to(m2)
 
     for _, marker_data in df.iterrows():
-        # print(marker_data)
         marker_location = [marker_data["lat"], marker_data["lon"]]
         radius = marker_data["rad"]
         folium.Circle(

@@ -79,3 +79,16 @@ AS $$
 	  res.append([lon, lat, i['monthly_income']])
  return res
 $$ LANGUAGE plpython3u;
+
+-- Function for activating existing virtualenv
+
+CREATE OR REPLACE FUNCTION activate_python_venv(venv text)
+  RETURNS void AS
+$BODY$
+    import os
+
+    activate_this = os.path.join(venv, 'bin', 'activate_this.py')
+
+    exec(open(activate_this).read(), dict(__file__=activate_this))
+$BODY$
+LANGUAGE plpython3u;
