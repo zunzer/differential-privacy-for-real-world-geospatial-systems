@@ -1,16 +1,18 @@
 from datetime import datetime
-import dash
-import dash_bootstrap_components as dbc
-import folium
 import pandas as pd
+
 import plotly.express as px
 import plotly.graph_objects as go
-from creatorapp import creator_callbacks, creator_layout
+
+import dash
+import dash_bootstrap_components as dbc
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
-from evaluatorapp import evaluator_layout, evaluator_callbacks
+import folium
 from folium.plugins import MarkerCluster
-from planareval import planar_layout, planar_callbacks
+from evaluator_app import evaluator_layout, evaluator_callbacks
+from creator_app import creator_callbacks, creator_layout
+from planar_app import planar_layout, planar_callbacks
 from postgres import aggregator
 
 # Execute aggregation to get initial value when starting the Dashboard.
@@ -35,7 +37,7 @@ app = dash.Dash(
 app.title = "Analytics Dashboard"
 
 
-def plot_clustering(longitudes, latitudes):
+def plot_clustering(longitudes:list, latitudes:list):
     """
     Create clustering map for the number of orders within a certain map area
     :param longitudes: longitudes of coordinates
@@ -70,7 +72,7 @@ def plot_clustering(longitudes, latitudes):
     return m._repr_html_()
 
 
-def plot_income(longitudes, latitudes, numerical_values):
+def plot_income(longitudes:list, latitudes:list, numerical_values:list):
     """
     Create heatmap of areas with the highest mean income
     :type numerical_values: object
@@ -100,7 +102,7 @@ def plot_income(longitudes, latitudes, numerical_values):
     return figure
 
 
-def plot_centroid(centroid):
+def plot_centroid(centroid:(float, float)):
     """
     Plot the centroid
     :param centroid: coordinates of centroid
@@ -126,7 +128,7 @@ def plot_centroid(centroid):
     return figure
 
 
-def plot_rect(rect):
+def plot_rect(rect:list):
     """
     Plots the bounding rectangles for the requested location coordinates
     :param rect: List of coordinates of the rectangle to plot

@@ -11,9 +11,15 @@ from sshtunnel import SSHTunnelForwarder
 IS_IN_PROD = False
 
 
-# main function for requesting data from all three DP-functions defined in the database return a list of coordinates
-# for heatmap and clustering, as well as a dict for the private centroids and bounding rectangles respectively
 def aggregator(epsilon: float = 2.0, n: int = 1) -> object:
+    """
+    Main function for requesting data from all three DP-functions defined in the database return a list of coordinates
+    for heatmap and clustering, as well as a dict for the private centroids and bounding rectangles respectively
+
+    :param epsilon:
+    :param n:
+    :return:
+    """
     query_result = execute_query(
         f"SELECT private_data({epsilon}, {n})",
     )
@@ -39,15 +45,25 @@ def aggregator(epsilon: float = 2.0, n: int = 1) -> object:
     )
 
 
-# serialize output from private bounding rectangle database function for later use
 def clean_bounding_rect_result(row: Row, key: str):
+    """
+    Serialize output from private bounding rectangle database function for later use
+    :param row:
+    :param key:
+    :return:
+    """
     clean_string = row._mapping[key].replace('"', "")
     dict_value = ast.literal_eval(clean_string)
     return dict_value
 
 
-# serialize output from private centroid database function for later use
 def clean_centroid_result(row: Row, key: str):
+    """
+    Serialize output from private centroid database function for later use
+    :param row:
+    :param key:
+    :return:
+    """
     clean_string = row._mapping[key].replace('"', "").replace(">", "").replace("<", "")
     tuple_value = ast.literal_eval(clean_string)
     if len(tuple_value) <= 1:
@@ -58,22 +74,33 @@ def clean_centroid_result(row: Row, key: str):
         return tuple_value
 
 
-# serialize output from private data function for later use
 def clean_private_data(row: Row, key: str):
+    """
+    Serialize output from private data function for later use
+    :param row:
+    :param key:
+    :return:
+    """
     clean_string = row._mapping[key].replace('"', "")
     dict_value = ast.literal_eval(clean_string)
     return dict_value
 
 
-# main function for establishing a database connection as well as handling and executing queries on the database when
-# used from a machine different than the database machine, an ssh-tunnel can be used to establish a secure connection
-# with the remote database server reads important credentials from settings.ini-file, for the ssh and database
-# connection activates the virtual environment needed for the database function imports enables the return of either
-# fetched output for SELECT-queries or unfetched output for a more verbose handling of SELECT-queries or SQL-commands
-# that return nothing
 def execute_query(
-    query: str, unfetched_output: bool = False
+        query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
+    """
+    Main function for establishing a database connection as well as handling and executing queries on the database when
+    used from a machine different than the database machine, an ssh-tunnel can be used to establish a secure connection
+    with the remote database server reads important credentials from settings.ini-file, for the ssh and database
+    connection activates the virtual environment needed for the database function imports enables the return of either
+    fetched output for SELECT-queries or unfetched output for a more verbose handling of SELECT-queries or SQL-commands
+    that return nothing
+
+    :param query:
+    :param unfetched_output:
+    :return:
+    """
     config = ConfigParser()
     config.read("../settings.ini")
     db_settings = config["postgres"]
@@ -98,14 +125,14 @@ def execute_query(
                 return query_result
     else:
         with SSHTunnelForwarder(
-            (
-                ssh_settings["host_ip"],
-                int(ssh_settings["port"]),
-            ),  # Remote server IP and SSH port
-            ssh_username=ssh_settings["username"],
-            ssh_pkey=ssh_settings["pkey_path"],
-            ssh_private_key_password=ssh_settings["pkey_password"],
-            remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
+                (
+                        ssh_settings["host_ip"],
+                        int(ssh_settings["port"]),
+                ),  # Remote server IP and SSH port
+                ssh_username=ssh_settings["username"],
+                ssh_pkey=ssh_settings["pkey_path"],
+                ssh_private_key_password=ssh_settings["pkey_password"],
+                remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
         ) as server:  # PostgreSQL server IP and sever port on remote machine
             server.start()  # start ssh sever
             print("Server connected via SSH")
