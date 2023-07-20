@@ -1,4 +1,3 @@
-import dash
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.graph_objects as go
@@ -8,20 +7,34 @@ from dash.dependencies import Input, Output, State
 from postgres import clean_centroid_result, execute_query
 
 
-# requests a private centroid and returns a dict of centroids
-def request_dp_centroid(epsilon, n: int):
+def request_dp_centroid(epsilon: float, n: int):
+    """
+    Requests multiple noised centroids and return a dict of centroids
+    :param epsilon: value of epsilon
+    :param n: number of request to make
+    :return: dictionary of centroids
+    """
     res = execute_query(f"SELECT private_centroid({epsilon}, {n});")
     return clean_centroid_result(res, "private_centroid")
 
 
-# requests a real centroid and returns a dict of centroids
 def request_centroid(n: int):
+    """
+    Requests multiple real centroids and returns a dict of centroids
+    :param n: number of request to make
+    :return: dictionary of centroids
+    """
     res = execute_query(f"SELECT real_centroid({n});")
     return clean_centroid_result(res, "real_centroid")
 
 
-# fetch private centroids and prepare them for plotting within the 3D evaluation
-def fetch_dp_centroids(epsilon, n):
+def fetch_dp_centroids(epsilon: float, n: int):
+    """
+    Fetch private centroids and prepare them for plotting within the 3D evaluation
+    :param epsilon: value of epsilon
+    :param n: number of request to make
+    :return: x,y and z lists to plot in 3D
+    """
     coordinate_list = request_dp_centroid(epsilon, n)
     latitudes, longitudes = zip(*coordinate_list)
     lon_min = min(longitudes) - 5
@@ -39,9 +52,16 @@ def fetch_dp_centroids(epsilon, n):
     return x, y, z
 
 
-# prepare the private centroids and plot them within the 3D evaluationn
-# applies gaussian smoothing of the aggregated data for visual purposes
-def plot_3d_dp_centroids(x, y, z, sf):
+def plot_3d_dp_centroids(x: list, y: list, z: list, sf: int):
+    """
+    Prepare the noised centroids and plot them within the 3D evaluation
+    Applies gaussian smoothing of the aggregated data for visualization purposes
+    :param x: list of x values in 3D
+    :param y: list of y values in 3D
+    :param z: list of z values in 3D
+    :param sf: smoothing factor
+    :return: 3D figure of centroid
+    """
     smoothed_z = ndimage.gaussian_filter(z, sigma=sf)
     fig = go.Figure(data=[go.Surface(x=x, y=y, z=smoothed_z)])
     fig.update_traces(
@@ -56,8 +76,13 @@ def plot_3d_dp_centroids(x, y, z, sf):
     return fig
 
 
-# plot the received real centroids within the 3D evaluation
+#
 def plot_3d_centroids(n):
+    """
+    Plot the received real centroids
+    :param n: number of requests to make
+    :return: 3D figure of received centroids
+    """
     coordinate_list = request_centroid(n)
     latitudes, longitudes = coordinate_list[0], coordinate_list[1]
     lon_min = min(longitudes) - 5
@@ -83,6 +108,7 @@ def plot_3d_centroids(n):
     return fig
 
 
+# define the html layout for the 3D evaluator page
 def evaluator_layout():
     layout = dbc.Container(
         [
@@ -96,7 +122,7 @@ def evaluator_layout():
                                 1,
                                 4,
                                 0.01,
-                                marks={i: "{}".format(10**i) for i in range(5)},
+                                marks={i: "{}".format(10 ** i) for i in range(5)},
                                 value=1.2,
                                 id="num",
                             ),
@@ -106,7 +132,7 @@ def evaluator_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10**i) - 1), 2)
+                                    i: "{}".format(round((10 ** i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,
@@ -157,17 +183,18 @@ def evaluator_layout():
     return layout
 
 
-# Callback to update the values of the figure
+# define callbacks for evaluator app
+def evaluator_callbacks(app):
 
-
-def update_evaluator(app):
+    # callback to display selected epsilon and number of request
     @app.callback(
         Output("output2", "children"),
         [Input("num", "value"), Input("epsilon2", "value")],
     )
     def display_value(number, epsilon):
-        return f"Number of Requests: {int(10**number)}, Epsilon: {round(float(10**epsilon-1),2)}"
+        return f"Number of Requests: {int(10 ** number)}, Epsilon: {round(float(10 ** epsilon - 1), 2)}"
 
+    # callback to requests private and non-private centroids and display 3D graphs
     @app.callback(
         Output("output_evaluation", "children"),
         Output("graph", "figure"),
@@ -177,10 +204,9 @@ def update_evaluator(app):
         [State("num", "value"), State("epsilon2", "value")],
         [Input("evaluate-button", "n_clicks")],
     )
-    # update the plotted centroid distributions by regenrating the plots with new input values for epsilon and n
     def update_figure(value, epsilon, n_clicks):
-        value = int(10**value)
-        epsilon = float((10**epsilon) - 1)
+        value = int(10 ** value)
+        epsilon = float((10 ** epsilon) - 1)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
         print("Plo1 ready")
@@ -190,7 +216,7 @@ def update_evaluator(app):
         fig4 = plot_3d_dp_centroids(x, y, z, 3)
         print("Received plots")
         return (
-            f"Display 3D Distribution for n={value} and e={round(epsilon,2)}",
+            f"Display 3D Distribution for n={value} and e={round(epsilon, 2)}",
             fig1,
             fig2,
             fig3,

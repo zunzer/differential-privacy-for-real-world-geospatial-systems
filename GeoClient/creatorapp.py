@@ -1,13 +1,10 @@
-import dash
 import dash_bootstrap_components as dbc
-import numpy as np
-import plotly.graph_objects as go
-import scipy.ndimage as ndimage
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 from postgres import execute_query
 
 
+# define html layout for the creator page to create new data instances in database
 def creator_layout():
     layout = dbc.Container(
         [
@@ -68,7 +65,7 @@ def creator_layout():
                                     "width": "100%",
                                     "height": "1cm",
                                     "display": "inline-block",
-                                    "background-color": "#0e1012",
+                                    "backgroundColor": "#0e1012",
                                     "border": "none",
                                     "color": "white",
                                 },
@@ -95,7 +92,7 @@ def creator_layout():
                                     "width": "100%",
                                     "height": "1cm",
                                     "display": "inline-block",
-                                    "background-color": "#0e1012",
+                                    "backgroundColor": "#0e1012",
                                     "border": "none",
                                     "color": "white",
                                 },
@@ -111,10 +108,10 @@ def creator_layout():
     return layout
 
 
-# Callback to update the values of the figure
-
-
+# define all callbacks for the creator page
 def creator_callbacks(app):
+
+    # callback to create a new user in the database
     @app.callback(
         Output("output-submit", "children"),
         [
@@ -124,16 +121,16 @@ def creator_callbacks(app):
         ],
         Input("submit-query", "n_clicks"),
     )
-    def display_value(long, lat, income, nclicks):
+    def display_value(long, lat, income, n_clicks):
         max_index = execute_query(
             "SELECT MAX(index) FROM public.online_delivery_data;"
         )._mapping["max"]
         if (
-            nclicks > 0
-            and type(long) == float
-            and type(lat) == float
-            and abs(lat) < 90.0
-            and abs(long) < 180.0
+                n_clicks > 0
+                and type(long) == float
+                and type(lat) == float
+                and abs(lat) < 90.0
+                and abs(long) < 180.0
         ):
             print("Execute insert")
             # add a new database entry based on the selected coordinates and income values
@@ -142,22 +139,23 @@ def creator_callbacks(app):
                 unfetched_output=True,
             )
             print("Executed insert")
-            return f"Value: {long},{lat},{income}, {nclicks}"
-        elif nclicks > 0:
+            return f"Value: {long},{lat},{income}, {n_clicks}"
+        elif n_clicks > 0:
             return "Invalid coordinates. Coordinates have to be entered as a float. (e.g. 32.215)"
         else:
             print("Insert failed")
             return
 
+    # callback to delete all added users in the database
     @app.callback(
         Output("output-delete", "children"), Input("delete-query", "n_clicks")
     )
-    # delete all new user added vlues from the database
-    def display_value(nclicks):
-        if nclicks > 0:
+    def display_value(n_clicks):
+        if n_clicks > 0:
             print("Execute delete")
             _ = execute_query(
-                "DELETE FROM public.online_delivery_data WHERE index >= 388;",  # original dataset only consists of 387 entries
+                "DELETE FROM public.online_delivery_data WHERE index >= 388;",
+                # original dataset only consists of 387 entries
                 unfetched_output=True,
             )
             print("Finished delete")

@@ -150,7 +150,7 @@ def planar_layout():
             html.Iframe(
                 id="data_map4",
                 srcDoc="",
-                style={"margin-top": "1cm", "margin-bottom": "1cm"},
+                style={"marginTop": "1cm", "marginBottom": "1cm"},
                 width="90%",
                 height="600",
             ),
@@ -163,7 +163,7 @@ def planar_layout():
 # Callback to update the values of the figure
 
 
-def update_planar(app):
+def planar_callbacks(app):
     @app.callback(
         Output("output4", "children"),
         [Input("num4", "value"), Input("epsilon4", "value")],

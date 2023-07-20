@@ -1,24 +1,22 @@
 from datetime import datetime
-
 import dash
 import dash_bootstrap_components as dbc
 import folium
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from creatorapp import creator_callbacks, creator_layout
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
-from evaluatorapp import evaluator_layout, update_evaluator
+from evaluatorapp import evaluator_layout, evaluator_callbacks
 from folium.plugins import MarkerCluster
-from planareval import planar_layout, update_planar
+from planareval import planar_layout, planar_callbacks
 from postgres import aggregator
 
-# Execute a aggregation to get initial value when starting up the Dashboard.
-longitudes, latitudes, income, centroid, rect = aggregator()
+# Execute aggregation to get initial value when starting the Dashboard.
+longitudes_init, latitudes_init, income_init, centroid_init, rect_init = aggregator()
 
-# maps the income strings from the original data to numerical values
+# Mapping for the income strings from the original data to numerical values for heatmap
 income_mapping = {
     "10001 to 25000": 2.5,
     "25001 to 50000": 5,
@@ -26,8 +24,9 @@ income_mapping = {
     "Below Rs.10000": 1,
     "No Income": 0,
 }
-numerical_values = [income_mapping[range_] for range_ in income]
+numerical_values = [income_mapping[range_] for range_ in income_init]
 
+# Initialize app
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -36,31 +35,13 @@ app = dash.Dash(
 app.title = "Analytics Dashboard"
 
 
-# Heatmap of areas with the highest number of orders
-def plot_number_orders(longitudes, latitudes):
-    figure = go.Figure(
-        data=go.Densitymapbox(
-            lon=longitudes,
-            lat=latitudes,
-            # z=np.ones_like(latitudes),
-            radius=5,
-        ),
-        layout=go.Layout(
-            title="Areas with the highest number of Orders:",
-            mapbox=dict(
-                style="open-street-map",
-                center={"lat": 12.995, "lon": 77.5773},
-                zoom=10,
-            ),
-            height=650,
-        ),
-    )
-
-    return figure
-
-
-# Clustering map for the number of orders within a certain map area
-def plot_number_orders_new(longitudes, latitudes):
+def plot_clustering(longitudes, latitudes):
+    """
+    Create clustering map for the number of orders within a certain map area
+    :param longitudes: longitudes of coordinates
+    :param latitudes: latitudes of coordinates
+    :return: figure with clustered data
+    """
     coordinates = [
         {"name": "order", "lon": lon, "lat": lat}
         for lon, lat in zip(longitudes, latitudes)
@@ -68,7 +49,7 @@ def plot_number_orders_new(longitudes, latitudes):
 
     # Create a Pandas DataFrame to hold the coordinates
     df = pd.DataFrame(coordinates)
-    print("Create Folium Map")
+
     # Create a map using Folium
     m = folium.Map(
         location=[12.97, 77.59],
@@ -89,8 +70,15 @@ def plot_number_orders_new(longitudes, latitudes):
     return m._repr_html_()
 
 
-# Heatmap of areas with the highest mean income
 def plot_income(longitudes, latitudes, numerical_values):
+    """
+    Create heatmap of areas with the highest mean income
+    :type numerical_values: object
+    :param longitudes: longitudes of coordinates
+    :param latitudes: latitudes of coordinates
+    :param numerical_values: mapping of the income
+    :return: figure with heatmap
+    """
     figure = go.Figure(
         data=go.Densitymapbox(
             lon=longitudes,
@@ -112,8 +100,12 @@ def plot_income(longitudes, latitudes, numerical_values):
     return figure
 
 
-# plots the centroid based on the requested location coordinates
 def plot_centroid(centroid):
+    """
+    Plot the centroid
+    :param centroid: coordinates of centroid
+    :return: figure of map with centroid
+    """
     figure = px.scatter_mapbox(
         lat=[centroid[0]],
         lon=[centroid[1]],
@@ -134,8 +126,12 @@ def plot_centroid(centroid):
     return figure
 
 
-# plots the bounding rectangles for the requested location coordinates
 def plot_rect(rect):
+    """
+    Plots the bounding rectangles for the requested location coordinates
+    :param rect: List of coordinates of the rectangle to plot
+    :return: figure with bounding rectangle
+    """
     figure = go.Figure(
         data=go.Scattermapbox(
             lat=[float(item[0]) for item in rect[0]],
@@ -160,7 +156,7 @@ def plot_rect(rect):
     return figure
 
 
-# definition of the HTML-Layout for the homepage
+# define the HTML-Layout for the homepage
 homelayout = dbc.Container(
     [
         html.Br(),
@@ -177,7 +173,7 @@ homelayout = dbc.Container(
                             1.5,
                             0.01,
                             marks={
-                                i: "{}".format(round((10**i) - 1), 2)
+                                i: "{}".format(round((10 ** i) - 1), 2)
                                 for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                             },
                             value=1.5,
@@ -203,7 +199,7 @@ homelayout = dbc.Container(
                                             "width": "50%",
                                             "height": "1cm",
                                             "display": "inline-block",
-                                            "background-color": "#0e1012",
+                                            "backgroundColor": "#0e1012",
                                             "border": "none",
                                             "color": "white",
                                         },
@@ -239,7 +235,7 @@ homelayout = dbc.Container(
                         html.Iframe(
                             id="data_map",
                             srcDoc="",
-                            style={"margin-top": "1cm", "margin-bottom": "1cm"},
+                            style={"marginTop": "1cm", "marginBottom": "1cm"},
                             width="90%",
                             height="600",
                         ),
@@ -296,7 +292,7 @@ homelayout = dbc.Container(
     fluid=True,
 )
 
-
+# define layout of navbar and headline
 app.layout = html.Div(
     [
         html.Div(
@@ -305,7 +301,7 @@ app.layout = html.Div(
                 style={"color": "white", "margin": "0"},
             ),
             style={
-                "background-color": "#0e1012",
+                "backgroundColor": "#0e1012",
                 "padding": "16px 32px",
                 "position": "sticky",
             },
@@ -330,16 +326,19 @@ app.layout = html.Div(
     ]
 )
 
-update_evaluator(app)
-update_planar(app)
+# import callbacks of other app modules
+evaluator_callbacks(app)
+planar_callbacks(app)
 creator_callbacks(app)
 
 
+# callback to update epsilon value after select
 @app.callback(Output("output_value_main", "children"), Input("epsilon", "value"))
 def display_value(epsilon):
     return f"Epsilon: {round(float((10 ** epsilon) - 1), 2)}"
 
 
+# callback to update all plots based on the selected epsilon value
 @app.callback(
     [
         Output("output", "children"),
@@ -351,17 +350,15 @@ def display_value(epsilon):
     [State("epsilon", "value")],
     [Input("submit-button", "n_clicks")],
 )
-
-# update all plots based on the selected epsilon value
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = float((10**epsilon) - 1)
+        epsilon = float((10 ** epsilon) - 1)
         print("update")
         print("Started:", datetime.now())
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
         print("Ended:", datetime.now())
         numerical_values = [income_mapping[range_] for range_ in income]
-        figure1 = plot_number_orders_new(
+        figure1 = plot_clustering(
             [float(i) for i in longitudes], [float(i) for i in latitudes]
         )
         figure2 = plot_income(
@@ -383,10 +380,7 @@ def update_variable(epsilon, n_clicks):
 
     return
 
-    # Callback to update the page content based on the URL
 
-
-# entry point of the application
-# starts the dashboard server
+# start the app server
 if __name__ == "__main__":
     app.run_server(debug=True)

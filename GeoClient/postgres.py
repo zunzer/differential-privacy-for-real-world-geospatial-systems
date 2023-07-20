@@ -11,9 +11,9 @@ from sshtunnel import SSHTunnelForwarder
 IS_IN_PROD = False
 
 
-# main function for requesting data from all three DP-functions defined in the database
-# return a list of coordinates for heatmap and clustering, as well as a dict for the private centroids and bouding rectangles respectively
-def aggregator(epsilon: float = 2.0, n: int = 1):
+# main function for requesting data from all three DP-functions defined in the database return a list of coordinates
+# for heatmap and clustering, as well as a dict for the private centroids and bounding rectangles respectively
+def aggregator(epsilon: float = 2.0, n: int = 1) -> object:
     query_result = execute_query(
         f"SELECT private_data({epsilon}, {n})",
     )
@@ -65,16 +65,17 @@ def clean_private_data(row: Row, key: str):
     return dict_value
 
 
-# main function for establishing a database connection as well as handling and executing queries on the database
-# when used from a machine different than the database machine, an ssh-tunnel can be used to establish a secure connection with the remote database server
-# reads important credentials from settings.ini-file, for the ssh and database connection
-# activates the virtual environment needed for the database function imports
-# enables the return of either fetched output for SELECT-queries or unfetched output for a more verbose handling of SELECT-queries or SQL-commands that return nothing
+# main function for establishing a database connection as well as handling and executing queries on the database when
+# used from a machine different than the database machine, an ssh-tunnel can be used to establish a secure connection
+# with the remote database server reads important credentials from settings.ini-file, for the ssh and database
+# connection activates the virtual environment needed for the database function imports enables the return of either
+# fetched output for SELECT-queries or unfetched output for a more verbose handling of SELECT-queries or SQL-commands
+# that return nothing
 def execute_query(
     query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
     config = ConfigParser()
-    config.read("settings.ini")
+    config.read("../settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
 
@@ -83,9 +84,9 @@ def execute_query(
         engine = create_engine(
             f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:5432/{db_settings['db_name']}",
         )
-        insp = inspect(engine)
+        _ = inspect(engine)
         with engine.connect() as connection:
-            env_activation = connection.execute(
+            _ = connection.execute(
                 text("SELECT activate_python_venv('/home/y_voigt/.venv');")
             )
             sql_query = connection.execute(text(query))
@@ -114,9 +115,9 @@ def execute_query(
             engine = create_engine(
                 f"postgresql://{db_settings['user']}:{db_settings['password']}@{db_settings['host_ip']}:{local_port}/{db_settings['db_name']}",
             )
-            insp = inspect(engine)
+            _ = inspect(engine)
             with engine.connect() as connection:
-                env_activation = connection.execute(
+                _ = connection.execute(
                     text("SELECT activate_python_venv('/home/y_voigt/.venv');")
                 )
                 sql_query = connection.execute(text(query))
