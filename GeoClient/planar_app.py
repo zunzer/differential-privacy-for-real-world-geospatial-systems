@@ -1,9 +1,9 @@
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import folium
 import haversine as hs
 import pandas as pd
+from dash import dcc, html
+from dash.dependencies import Input, Output, State
 from postgres import aggregator
 
 
@@ -69,7 +69,7 @@ def planar_layout():
                                 1,
                                 4,
                                 0.01,
-                                marks={i: "{}".format(10 ** i) for i in range(5)},
+                                marks={i: "{}".format(10**i) for i in range(5)},
                                 value=1.2,
                                 id="num4",
                             ),
@@ -79,7 +79,7 @@ def planar_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    i: "{}".format(round((10**i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,
@@ -151,8 +151,8 @@ def planar_callbacks(app):
         [Input("evaluate-button4", "n_clicks")],
     )
     def update_figure(value, epsilon, n_clicks):
-        value = int(10 ** value)
-        epsilon = float((10 ** epsilon) - 1)
+        value = int(10**value)
+        epsilon = float((10**epsilon) - 1)
         print("Start fetching")
 
         fig = plot(value, epsilon)

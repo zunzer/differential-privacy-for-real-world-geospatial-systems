@@ -110,7 +110,6 @@ def creator_layout():
 
 # define all callbacks for the creator page
 def creator_callbacks(app):
-
     # callback to create a new user in the database
     @app.callback(
         Output("output-submit", "children"),
@@ -126,11 +125,11 @@ def creator_callbacks(app):
             "SELECT MAX(index) FROM public.online_delivery_data;"
         )._mapping["max"]
         if (
-                n_clicks > 0
-                and type(long) == float
-                and type(lat) == float
-                and abs(lat) < 90.0
-                and abs(long) < 180.0
+            n_clicks > 0
+            and type(long) == float
+            and type(lat) == float
+            and abs(lat) < 90.0
+            and abs(long) < 180.0
         ):
             print("Execute insert")
             # add a new database entry based on the selected coordinates and income values
@@ -150,7 +149,7 @@ def creator_callbacks(app):
     @app.callback(
         Output("output-delete", "children"), Input("delete-query", "n_clicks")
     )
-    def display_value(n_clicks):
+    def display_value(n_clicks: int):
         if n_clicks > 0:
             print("Execute delete")
             _ = execute_query(

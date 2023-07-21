@@ -7,7 +7,7 @@ from dash.dependencies import Input, Output, State
 from postgres import clean_centroid_result, execute_query
 
 
-def request_dp_centroid(epsilon: float, n: int):
+def request_dp_centroid(epsilon: float, n: int) -> dict:
     """
     Requests multiple noised centroids and return a dict of centroids
     :param epsilon: value of epsilon
@@ -18,7 +18,7 @@ def request_dp_centroid(epsilon: float, n: int):
     return clean_centroid_result(res, "private_centroid")
 
 
-def request_centroid(n: int):
+def request_centroid(n: int) -> dict:
     """
     Requests multiple real centroids and returns a dict of centroids
     :param n: number of request to make
@@ -77,7 +77,7 @@ def plot_3d_dp_centroids(x: list, y: list, z: list, sf: int):
 
 
 #
-def plot_3d_centroids(n):
+def plot_3d_centroids(n: int):
     """
     Plot the received real centroids
     :param n: number of requests to make
@@ -122,7 +122,7 @@ def evaluator_layout():
                                 1,
                                 4,
                                 0.01,
-                                marks={i: "{}".format(10 ** i) for i in range(5)},
+                                marks={i: "{}".format(10**i) for i in range(5)},
                                 value=1.2,
                                 id="num",
                             ),
@@ -132,7 +132,7 @@ def evaluator_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10 ** i) - 1), 2)
+                                    i: "{}".format(round((10**i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,
@@ -185,7 +185,6 @@ def evaluator_layout():
 
 # define callbacks for evaluator app
 def evaluator_callbacks(app):
-
     # callback to display selected epsilon and number of request
     @app.callback(
         Output("output2", "children"),
@@ -205,8 +204,8 @@ def evaluator_callbacks(app):
         [Input("evaluate-button", "n_clicks")],
     )
     def update_figure(value, epsilon, n_clicks):
-        value = int(10 ** value)
-        epsilon = float((10 ** epsilon) - 1)
+        value = int(10**value)
+        epsilon = float((10**epsilon) - 1)
         print("Start fetching")
         fig1 = plot_3d_centroids(value)
         print("Plo1 ready")

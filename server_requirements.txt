@@ -1,0 +1,6 @@
+geopandas==0.13.2
+geoprivacy==0.0.4
+numpy
+pandas>=2.0
+plpygis==0.2.1
+shapely>=2.0

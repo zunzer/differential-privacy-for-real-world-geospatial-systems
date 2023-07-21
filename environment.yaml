@@ -11,8 +11,13 @@ dependencies:
 - pandas>=2.0
 - shapely
 - yaml
+- sshtunnel
+- folium
+- haversine
+- dash
+- dash-bootstrap-components
 
- #db stuff
+ # database
 - psycopg2
 - sqlalchemy>=2.0
 - geoalchemy2
@@ -28,3 +33,4 @@ dependencies:
   # publishing
 - jupyter-book
 - ghp-import
+- notebook

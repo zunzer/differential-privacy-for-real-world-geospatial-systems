@@ -1,6 +1,7 @@
 numpy
 scipy
 pandas>=2.0
+geopandas
 shapely
 yaml
 psycopg2
@@ -12,3 +13,9 @@ matplotlib
 plotly
 jupyter-book
 ghp-import
+dash
+dash_boostrap_components
+sshtunnel
+geoprivacy
+folium
+haversine

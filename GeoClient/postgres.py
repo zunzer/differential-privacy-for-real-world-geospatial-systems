@@ -45,7 +45,7 @@ def aggregator(epsilon: float = 2.0, n: int = 1) -> object:
     )
 
 
-def clean_bounding_rect_result(row: Row, key: str):
+def clean_bounding_rect_result(row: Row, key: str) -> dict:
     """
     Serialize output from private bounding rectangle database function for later use
     :param row:
@@ -74,7 +74,7 @@ def clean_centroid_result(row: Row, key: str):
         return tuple_value
 
 
-def clean_private_data(row: Row, key: str):
+def clean_private_data(row: Row, key: str) -> dict:
     """
     Serialize output from private data function for later use
     :param row:
@@ -87,7 +87,7 @@ def clean_private_data(row: Row, key: str):
 
 
 def execute_query(
-        query: str, unfetched_output: bool = False
+    query: str, unfetched_output: bool = False
 ) -> Union[CursorResult, Row]:
     """
     Main function for establishing a database connection as well as handling and executing queries on the database when
@@ -102,7 +102,7 @@ def execute_query(
     :return:
     """
     config = ConfigParser()
-    config.read("../settings.ini")
+    config.read("settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
 
@@ -125,14 +125,14 @@ def execute_query(
                 return query_result
     else:
         with SSHTunnelForwarder(
-                (
-                        ssh_settings["host_ip"],
-                        int(ssh_settings["port"]),
-                ),  # Remote server IP and SSH port
-                ssh_username=ssh_settings["username"],
-                ssh_pkey=ssh_settings["pkey_path"],
-                ssh_private_key_password=ssh_settings["pkey_password"],
-                remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
+            (
+                ssh_settings["host_ip"],
+                int(ssh_settings["port"]),
+            ),  # Remote server IP and SSH port
+            ssh_username=ssh_settings["username"],
+            ssh_pkey=ssh_settings["pkey_path"],
+            ssh_private_key_password=ssh_settings["pkey_password"],
+            remote_bind_address=(db_settings["host_ip"], int(db_settings["port"])),
         ) as server:  # PostgreSQL server IP and sever port on remote machine
             server.start()  # start ssh sever
             print("Server connected via SSH")

@@ -37,7 +37,7 @@ app = dash.Dash(
 app.title = "Analytics Dashboard"
 
 
-def plot_clustering(longitudes:list, latitudes:list):
+def plot_clustering(longitudes: list, latitudes: list):
     """
     Create clustering map for the number of orders within a certain map area
     :param longitudes: longitudes of coordinates
@@ -72,7 +72,7 @@ def plot_clustering(longitudes:list, latitudes:list):
     return m._repr_html_()
 
 
-def plot_income(longitudes:list, latitudes:list, numerical_values:list):
+def plot_income(longitudes: list, latitudes: list, numerical_values: list):
     """
     Create heatmap of areas with the highest mean income
     :type numerical_values: object
@@ -102,7 +102,7 @@ def plot_income(longitudes:list, latitudes:list, numerical_values:list):
     return figure
 
 
-def plot_centroid(centroid:(float, float)):
+def plot_centroid(centroid: (float, float)):
     """
     Plot the centroid
     :param centroid: coordinates of centroid
@@ -128,7 +128,7 @@ def plot_centroid(centroid:(float, float)):
     return figure
 
 
-def plot_rect(rect:list):
+def plot_rect(rect: list):
     """
     Plots the bounding rectangles for the requested location coordinates
     :param rect: List of coordinates of the rectangle to plot
@@ -175,7 +175,7 @@ homelayout = dbc.Container(
                             1.5,
                             0.01,
                             marks={
-                                i: "{}".format(round((10 ** i) - 1), 2)
+                                i: "{}".format(round((10**i) - 1), 2)
                                 for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                             },
                             value=1.5,
@@ -354,7 +354,7 @@ def display_value(epsilon):
 )
 def update_variable(epsilon, n_clicks):
     if n_clicks is not None:
-        epsilon = float((10 ** epsilon) - 1)
+        epsilon = float((10**epsilon) - 1)
         print("update")
         print("Started:", datetime.now())
         longitudes, latitudes, income, centroid, rect = aggregator(epsilon)
