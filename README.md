@@ -18,6 +18,8 @@ and limitations of the proposed approach.
 
 This implementation was realized as part of a project during the course "Privacy Engineering" in the summer semester of 2023 at the Technical University of Berlin. 
 
+![Example image of the Analytics Dashboard](image.png)
+
 ## Requirements
 
 See the included `requirements.txt` (pip) or `environment.yaml` (conda) files. Python 3.9 or greater is required. 
@@ -47,10 +49,12 @@ python GeoClient/app.py
 The application will start a web server running on localhost. To access it, follow this URL: [localhost:8050](localhost:8050).
 If this does not work, see the console output of the application for the correct URL.
 
+### Manually executing the SQL-functions
 To deploy the functions provided in `private_functions.sql`, simply execute the individual commands on your database with a SQL-Editor of your choice. When working with the functions directly within a SQL-Editor, make sure to activate the env beforehand, using this SQL-command:
 ```
 SELECT activate_python_venv('/your/path/.venv');
 ```
+To execute the functions, make sure that the epsilon value is entered as a floating point number, e.g. 12.0. 
 
 ## Dashboard python scripts
 ### app.py
@@ -73,4 +77,4 @@ This script presents the functionality of adding self-defined data points to the
 # Common issues
     raise KeyError(key)
     KeyError: 'postgres'
-Most probably the path in line 105 in `postgres.py` isn't pointing to the correct `settings.ini`-file. Fix by adjusting the path string.
+Most probably, the path in line 105 in `postgres.py` isn't pointing to the correct `settings.ini`-file. Fix by adjusting the path string.
