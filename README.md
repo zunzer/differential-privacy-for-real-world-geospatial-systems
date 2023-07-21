@@ -39,6 +39,9 @@ More information on that can be found in the official [documentation](https://ww
 
 Furthermore, the extension PostGIS has to be installed on the database. Detailed information on the installation process can be found in the official PostGIS [documentation](https://postgis.net/documentation/getting_started/).
 
+### settings.ini
+This file contains all constants used within our application. For the database connection, all necessary settings are already present. If a SSH-connection is to be used, the necessary informations can be added under the section `[ssh]`.
+
 ## Usage 
 
 To run the dashboard web app, run the following command. Ensure that the required dependencies are available. 
@@ -54,7 +57,11 @@ To deploy the functions provided in `private_functions.sql`, simply execute the 
 ```
 SELECT activate_python_venv('/your/path/.venv');
 ```
-To execute the functions, make sure that the epsilon value is entered as a floating point number, e.g. 12.0. 
+The function can be executed by using the SQL SELECT command. For example:
+```
+SELECT private_bounding_rect(12.0, 25);
+```
+The first value for the function call is the epsilon value and has to be always entered as a floating point number (e.g. 12.0). The second value is the number of queries that should be executed. This can be entered as a normal integer (e.g. 3)
 
 ## Dashboard python scripts
 ### app.py
@@ -78,3 +85,6 @@ This script presents the functionality of adding self-defined data points to the
     raise KeyError(key)
     KeyError: 'postgres'
 Most probably, the path in line 105 in `postgres.py` isn't pointing to the correct `settings.ini`-file. Fix by adjusting the path string.
+
+    SQL Error [38000]: ERROR: ModuleNotFoundError: No module named '<module_name>'
+This error occurs when a private function is executed on the database, without the virtual environment being activated. See `Usage` to prevent this.

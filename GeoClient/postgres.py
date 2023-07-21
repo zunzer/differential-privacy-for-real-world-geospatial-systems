@@ -7,9 +7,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text
 from sshtunnel import SSHTunnelForwarder
 
-# if True, no ssh-tunnel will be established
-IS_IN_PROD = False
-
 
 def aggregator(epsilon: float = 2.0, n: int = 1) -> object:
     """
@@ -105,6 +102,7 @@ def execute_query(
     config.read("settings.ini")
     db_settings = config["postgres"]
     ssh_settings = config["ssh"]
+    IS_IN_PROD = ast.literal_eval(db_settings["is_in_prod"])
 
     if IS_IN_PROD:
         # connect to PostgreSQL
