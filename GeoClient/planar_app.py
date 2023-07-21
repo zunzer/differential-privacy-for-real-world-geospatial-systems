@@ -1,46 +1,19 @@
-import math
-
-import dash
+from dash import dcc, html
+from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import folium
 import haversine as hs
-import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-import scipy.ndimage as ndimage
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
-from folium.plugins import MarkerCluster
-from postgres import aggregator, clean_centroid_result, execute_query
+from postgres import aggregator
 
 
-def haversine_distance(lat1, lon1, lat2, lon2):
-    # Convert degrees to radians
-    lat1_rad = math.radians(lat1)
-    lon1_rad = math.radians(lon1)
-    lat2_rad = math.radians(lat2)
-    lon2_rad = math.radians(lon2)
-
-    # Haversine formula
-    dlon = lon2_rad - lon1_rad
-    dlat = lat2_rad - lat1_rad
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
-    )
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    distance = 6371 * c  # Earth radius in kilometers
-
-    return distance
-
-
-def plot(n, epsilon):
-    # for i in number:
-    # request private data
-    # for each point calculate distance and update the max values
-    # plot centers
-    # plot max in radius
-    res = execute_query(f"SELECT real_centroid({n});")
+def plot(n: int, epsilon: float):
+    """
+    Plot a two d map with circles containing the coordinates of all received noised geolocations
+    :param n: number of requests
+    :param epsilon: epsilon value
+    :return: figure for 2d planar analysis
+    """
     longitudes, latitudes, income, centroid, rect = aggregator(99.0)
     real_long = [float(i) for i in longitudes]
     real_lat = [float(i) for i in latitudes]
@@ -96,7 +69,7 @@ def planar_layout():
                                 1,
                                 4,
                                 0.01,
-                                marks={i: "{}".format(10**i) for i in range(5)},
+                                marks={i: "{}".format(10 ** i) for i in range(5)},
                                 value=1.2,
                                 id="num4",
                             ),
@@ -106,7 +79,7 @@ def planar_layout():
                                 1.5,
                                 0.01,
                                 marks={
-                                    i: "{}".format(round((10**i) - 1), 2)
+                                    i: "{}".format(round((10 ** i) - 1), 2)
                                     for i in [0.1, 0.3, 0.5, 0.7, 1, 1.2, 1.4]
                                 },
                                 value=1.5,
@@ -160,17 +133,17 @@ def planar_layout():
     return layout
 
 
-# Callback to update the values of the figure
-
-
+# define function for callbacks of planar evaluation page
 def planar_callbacks(app):
+    # callback to display selected values
     @app.callback(
         Output("output4", "children"),
         [Input("num4", "value"), Input("epsilon4", "value")],
     )
     def display_value(number, epsilon):
-        return f"Number of Requests: {int(10**number)}, Epsilon: {round(float(10**epsilon-1),2)}"
+        return f"Number of Requests: {int(10 ** number)}, Epsilon: {round(float(10 ** epsilon - 1), 2)}"
 
+    # callback to plot the 2d analysis figure
     @app.callback(
         Output("output_evaluation4", "children"),
         Output("data_map4", "srcDoc"),
@@ -178,13 +151,13 @@ def planar_callbacks(app):
         [Input("evaluate-button4", "n_clicks")],
     )
     def update_figure(value, epsilon, n_clicks):
-        value = int(10**value)
-        epsilon = float((10**epsilon) - 1)
+        value = int(10 ** value)
+        epsilon = float((10 ** epsilon) - 1)
         print("Start fetching")
 
         fig = plot(value, epsilon)
 
         return (
-            f"Display 3D Distribution for n={value} and e={round(epsilon,2)}",
+            f"Display 3D Distribution for n={value} and e={round(epsilon, 2)}",
             fig,
         )
